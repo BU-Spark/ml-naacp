@@ -1,5 +1,6 @@
 import pandas as pd
 import en_core_web_sm
+import spacy
 import googlemaps 
 import requests
 
@@ -13,7 +14,7 @@ def get_locations(article_text):
     returns: locations - set of tuples of (NAME, 'GPE')
     """
     # get locations using NER  
-    nlp = en_core_web_sm.load()
+    nlp = spacy.load("en_core_web_lg")
     doc = nlp(article_text)
 
     # get the locations only, remove duplicates from results 
@@ -112,11 +113,11 @@ def get_census_demographics(year, dsource, dname, tract, county, state):
 
 def run_pipeline(text, year, dsource, dname, state, API_KEY):
     locations = get_locations(text)
-    #locations = {('Ontario', 'GPE'), ('the British Empire', 'GPE'), ('Angela', 'GPE'), ('Canada', 'GPE'), ('USA', 'GPE'), ('Springfield', 'GPE'), ('the United States', 'GPE'), ('Niagara', 'GPE'), ('America', 'GPE')}
-    #print(locations)
+    #locations = {('Boston', 'GPE'), ('Massachusetts', 'GPE'), ('Boston city', 'GPE'), ('Roxbury', 'GPE'), ('Fitchburg', 'GPE'), ('Medford', 'GPE')}
+    print(locations)
     location_geocode = get_location_geocode(API_KEY, locations)
-    #location_geocode = {'Ontario': {'lat': 42.4072107, 'lon': -71.3824374}, 'the British Empire': {'lat': 55.378051, 'lon': -3.435973}, 'Angela': {'lat': 37.09024, 'lon': -95.712891}, 'Canada': {'lat': 56.130366, 'lon': -106.346771}, 'USA': {'lat': 42.4072107, 'lon': -71.3824374}, 'Springfield': {'lat': 42.1014831, 'lon': -72.589811}, 'the United States': {'lat': 42.4072107, 'lon': -71.3824374}, 'Niagara': {'lat': 42.4072107, 'lon': -71.3824374}, 'America': {'lat': 42.4072107, 'lon': -71.3824374}}
-    #print(location_geocode)
+    #location_geocode = {'Boston': {'lat': 42.3600825, 'lon': -71.0588801}, 'Massachusetts': {'lat': 42.4072107, 'lon': -71.3824374}, 'Boston city': {'lat': 42.3600825, 'lon': -71.0588801}, 'Roxbury': {'lat': 42.3125672, 'lon': -71.0898796}, 'Fitchburg': {'lat': 42.5834228, 'lon': -71.8022955}, 'Medford': {'lat': 42.4184296, 'lon': -71.1061639}}
+    print(location_geocode)
     census_geos = get_census_geos(location_geocode)
 
     result = []
@@ -178,4 +179,5 @@ def main():
     return result
 
 if __name__ == "__main__":
-    main()
+    import json
+    print(json.dumps(main(),sort_keys=True, indent=2))
