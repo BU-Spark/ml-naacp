@@ -23,18 +23,29 @@ import rss_acq
 
 #infer vector: [d2v_model_x.infer_vector(['the', 'election', 'results', 'will', 'be', 'returned', 'tomorrow'])])
 
-class live_predictions:
+class pipelining:
     def __init__(self):
         print("> main: class initializing")
         self.rss_handler = rss_acq.rss_acquisition()
+
+    #takein rss feed
     def rss_in(self):
         self.rss_handler.rss_parse()
         data = self.rss_handler.acquiredToDF()
         print(data.head())
-        #print(data)
+
+    #write to firebase
+    def firebase_out(self):
+        pass
+    
+
+class live_predictions:
+    def __init__(self):
+        pass
+    
 
 
-a = live_predictions()
+a = pipelining()
 
 a.rss_in()
 
