@@ -37,8 +37,7 @@ class pipelining:
     #write to firebase
     def firebase_out(self):
         pass
-    
-
+#model = Doc2Vec.load(fname)
 class live_predictions:
     def __init__(self):
         pass
@@ -46,6 +45,5 @@ class live_predictions:
 
 
 a = pipelining()
-
 a.rss_in()
 

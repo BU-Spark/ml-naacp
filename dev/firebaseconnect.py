@@ -50,6 +50,7 @@ class firebase_pipeline:
 
     def write_rtdb(self, data):
         # ! assert <data> format here ! 
+        # ! assert <data> originality here !
         #data = {"ea":ea, "ei":ei, "et":et}
         data = json.dumps(data)
         headers={'Content-Type': 'application/x-www-form-urlencoded',}
