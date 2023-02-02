@@ -1,3 +1,10 @@
+## Dependencies
+there's a requirements.txt \n
+if you have problems with gensim try:
+'pip3 install gensim --no-binary :all:'
+
+
+
 main.py is the key runtime
 it features two classes, **pipelining**, which handles web input 
 and web output, and **live predictions** which handles loading and running the model

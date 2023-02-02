@@ -4,6 +4,12 @@
 #entry point, pipelines RSS feed to models, manages, etc
 #modified from EDA.ipynb in /pre-dev
 
+
+
+#to-do: 
+# classification generator [ ]
+# firebase write [ ]
+
 print("> main: loading libraries")
 import pandas as pd
 import numpy as np
@@ -32,18 +38,32 @@ class pipelining:
     def rss_in(self):
         self.rss_handler.rss_parse()
         data = self.rss_handler.acquiredToDF()
-        print(data.head())
+        #print(data.head())
+        return(data)
 
     #write to firebase
     def firebase_out(self):
         pass
+
 #model = Doc2Vec.load(fname)
 class live_predictions:
-    def __init__(self):
+    def __init__(self, model_path):
+        #load doc2vec model from path
+        self.model = Doc2Vec.load(model_path)
         pass
+
+    #entry point for running model on piece of input text
+    def make(self, input_text):
+
+        inferred_vector = self.model.infer_vector(input_text.split(" "))
+        print(inferred_vector)
+        pass
+    
     
 
 
 a = pipelining()
-a.rss_in()
+data = a.rss_in()
+b = live_predictions("./trainedmodels/november11_masked")
+b.make(data.iloc[0]['content'])
 
