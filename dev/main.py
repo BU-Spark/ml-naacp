@@ -26,7 +26,6 @@ from gensim.models.doc2vec import TaggedDocument
 import rss_acq
 
 
-
 #infer vector: [d2v_model_x.infer_vector(['the', 'election', 'results', 'will', 'be', 'returned', 'tomorrow'])])
 
 class pipelining:
@@ -47,7 +46,7 @@ class pipelining:
 
 #model = Doc2Vec.load(fname)
 class live_predictions:
-    def __init__(self, model_path):
+    def __init__(self, doc2vec_model_path):
         #load doc2vec model from path
         self.model = Doc2Vec.load(model_path)
         pass
