@@ -85,6 +85,21 @@ Entities:  ['9/11', 'Sikh', '110th Street', 'Central Park', 'Sikhs', 'Singh', 'O
 doc2vec unfortunately is going to end up encoding these entities together. 
 as the bias is present in the journalism it will be present in the model as well.
 
+in the future if performance is underwhelming on real-world examples i'd strongly encourage
+the introduction of another corpus into the training rather than a complete retraining or alteration of the architecture, or a limitation of tags by including them in the droptags.json
+
+to increase classifier performance rather than relevance performance i would drop tags AFTER they are included in doc2vec, ie, drop samples going into the neural network
+
+taglist.json is keyed by tags with which to substitute the list of actual tags
+
+the an instance of topicModel() exposes the tags it's working with via obj.tag_list
+
+in terms of 70 class classification, on open domain text, the doc2vec and neural network perform decently well. the larger doc2vec model is excellent at retrieving relevant entities for the most part and while testing this I often ended up googling tags and learning something new about the subject matter of the article it was processing.
+
+you may find that it is underwhelming on GBH specific data, and I'd assume that this may be due to differences in articles due to authorship and style.
+
+performance can be increased by simply adding more specific tags/editing available tags
+
 
 
 
