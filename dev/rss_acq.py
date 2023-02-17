@@ -38,6 +38,7 @@ class rss_acquisition:
         except Exception as e:
             print('> Err: The scraping job failed. See exception: ')
             print(e)
+            return("")
 
     #parse scraped RSS feed
     def rss_parse(self):
@@ -124,7 +125,7 @@ class rss_acquisition:
 
     #return acquired data as dataframe
     def acquiredToDF(self):
-        if(self.data!=None):
+        if(self.data!=None and self.data!=""):
             return(pd.DataFrame.from_records(self.data))
         else:
             return(None)

@@ -1,16 +1,22 @@
 import ast
-import spacy
+import numpy as np
+
 import multiprocessing
 from sklearn.model_selection import train_test_split
+
 import gensim
 from gensim.models import Doc2Vec
 from gensim.models.doc2vec import TaggedDocument
+import spacy
+
 import json
 import pandas as pd
+
 import datetime
 import time
+
 import matplotlib.pyplot as plt
-import numpy as np
+
 
 import topicNetwork
 
@@ -97,6 +103,10 @@ class internals:
                                     'PRODUCT',
                                     'LANGUAGE',
                                     'LAW']
+        tag_list = []
+        for key in self.tag_mappings:
+            tag_list.append(self.tag_mappings[key])
+        self.tag_list = list(np.unique(np.array(tag_list)))
 
     def mask_article(self, article):
         try:
@@ -235,17 +245,21 @@ def train():
     df3 = pd.read_csv ('./data/CNN_Articles_2.csv',on_bad_lines='skip')
     train_sample_three = a.build_clean_sample(df3, 'Article text', 'Category')
 
-    df4 = pd.read_csv('./data/news.tsv',on_bad_lines='skip', sep='\t')
-    train_sample_four = a.build_clean_sample(df4, 'News body', 'Topic')
+    #df4 = pd.read_csv('./data/news.tsv',on_bad_lines='skip', sep='\t')
+    #train_sample_four = a.build_clean_sample(df4, 'News body', 'Topic')
 
     #training_samples = pd.concat([train_sample_one,train_sample_two,train_sample_three])#, train_sample_four],ignore_index=True)
     #print(training_samples.tag.unique())
-    training_samples = train_sample_four
+    training_samples = pd.concat([train_sample_one,train_sample_two,train_sample_three], ignore_index=True)
 
     training_samples = a.correct_tags(training_samples)
     #print(training_samples.tag.unique())
     #train_sample_two = 
     training_corpus,testing_corpus = a.build_corpus(training_samples)
+    file = open('./data/corpus_b', 'wb')
+    savedversion = training_corpus+testing_corpus
+    pickle.dump(savedversion, file)
+    file.close()
     model = a.train_doc2vec(training_corpus)
 
 
@@ -281,36 +295,67 @@ def test_vectorizer(path):
     output = a.use_vectorizer(f)
     print(output)
 
-a = internals('./trainedmodels/20230215T185149')
-#save_corpus_to_pkl()
-q = load_corpus_from_pkl()
-q = np.array(q, dtype=object)
-print(q.shape)
-x = q[:,0]
-y = q[:,1]
 
-def vectorize_training_data():
-    start = time.time()
-    xmp = a.use_vectorized_vectorizer(x)
-    import pickle
-    file = open('./data/xmp', 'wb')
-    savedversion = xmp
-    pickle.dump(savedversion, file)
-    file.close()
-    end = time.time()
-    print(end - start)
+def train_neural_network():
+    a = internals('./trainedmodels/20230215T185149')
+    q = load_corpus_from_pkl()
 
+    q = np.array(q, dtype=object)
+    print(q.shape)
+    x = q[:,0]
+    y = q[:,1]
+    p_x = []
+    p_y = []
+    example_count = 0
+    indexing = 0
+    while example_count < 10000 and indexing<len(x):
+        if(y[indexing][0] in a.tag_list):
+            p_x.append(x[indexing])
+            p_y.append(a.tag_list.index(y[indexing][0]))
+            #print(x[indexing], a.tag_list.index(y[indexing][0]))
+            example_count+=1
+        else:
+            
+            pass
+        indexing+=1
+    xmp,smp = a.use_vectorized_vectorizer(p_x)
+    data = list(zip(xmp, p_y))
+    train, test = train_test_split(data, test_size = a.test_size)
+    
+    train=np.array([np.array(xi) for xi in train])
+    test=np.array([np.array(xi) for xi in test])
 
-xmp = a.use_vectorized_vectorizer(x[0:100])
-xmp = np.array(xmp, dtype=object)
-print(xmp.shape)
-print(x[0])
-#print(len(xmp[0][0]))
-print(xmp[1][0])
-print(x.shape)
-print(y.shape)
+    print(len(a.tag_list))
+    X_train=np.array([np.array(xi, dtype=np.float64) for xi in train[:,0]])
+    Y_train=np.array([np.array(np.array(xi, dtype=np.float64)) for xi in train[:,1]])
 
-#print(q[1])
-#train()
-#test_vectorizer('./trainedmodels/20230215T185149')
-#load_model()
+    X_test=np.array([np.array(xi, dtype=np.float64) for xi in test[:,0]])
+    Y_test=np.array([np.array(np.array(xi, dtype=np.float64)) for xi in test[:,1]])
+
+    #print(train[:,0].shape)
+    #print(train[0][0])
+    #print(Y_train.shape)
+    #print(test[0])
+    topicNetwork.train_network(X_train,Y_train,X_test,Y_test)
+    #print(train, test)
+        
+#@train_neural_network()
+def test_network():
+    a = internals('./trainedmodels/20230215T185149')
+    q = load_corpus_from_pkl()
+    network = topicNetwork.network_handler()
+    print(len(q))
+    for x in range(0, 10):
+        print(" ".join(q[x][0]))
+        v,s = a.use_vectorizer(" ".join(q[x][0]))
+
+        vec = v
+        #print(vec)
+        vec=np.array([np.array(vec, dtype=np.float64)], dtype=np.float64)
+        label = network.classify(vec)
+        print(a.tag_list[label])
+        print(s)
+       #print(q[x][1])
+#train_neural_network()
+#test_network()
+train()

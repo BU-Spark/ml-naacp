@@ -19,12 +19,9 @@ import spacy
 import nltk 
 
 #doc2vec
-import gensim
-from gensim.models import Doc2Vec
-from gensim.models.doc2vec import TaggedDocument
 
 import rss_acq
-
+import topicModel
 
 #infer vector: [d2v_model_x.infer_vector(['the', 'election', 'results', 'will', 'be', 'returned', 'tomorrow'])])
 
@@ -48,21 +45,24 @@ class pipelining:
 class live_predictions:
     def __init__(self, doc2vec_model_path):
         #load doc2vec model from path
-        self.model = Doc2Vec.load(model_path)
+        self.engine = topicModel.internals(doc2vec_model_path)
         pass
 
     #entry point for running model on piece of input text
     def make(self, input_text):
 
-        inferred_vector = self.model.infer_vector(input_text.split(" "))
-        print(inferred_vector)
+        inferred_vector,similar_tags = self.engine.use_vectorizer(input_text)
+        return(inferred_vector, similar_tags)
         pass
     
     
 
-
+#define RSS & Firestore pipelines
 a = pipelining()
+#define topic engine
+lp0 = live_predictions("./trainedmodels/20230215T185149")
+#lp1 = live_predictions("./trainedmodels/xxxxxxxxxxxxxx")
 data = a.rss_in()
-b = live_predictions("./trainedmodels/november11_masked")
-b.make(data.iloc[0]['content'])
+if(data):
+    lp0.make(data.iloc[0]['content'])
 
