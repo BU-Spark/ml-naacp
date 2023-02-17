@@ -22,7 +22,7 @@ import topicNetwork
 
 
 class internals:
-    def __init__(self, doc2vec_model_path):
+    def __init__(self, doc2vec_model_path, nn_path):
         print("> topicModel: internals initializing")
 
         print("> topicModel: loading spacy dep. tagging model")
@@ -32,6 +32,10 @@ class internals:
             pass
         else:
             self.load_vectorizer(doc2vec_model_path)
+        if(nn_path==None):
+            pass
+        else:
+            self.network = topicNetwork.network_handler(nn_path)
         self.config()
         print("> topicModel: internals intialized")
 
@@ -42,6 +46,16 @@ class internals:
         self.doc2vecmodel = Doc2Vec.load(self.doc2vec_model_path)
         print("> topicModel: loaded model from path: ", doc2vec_model_path)
 
+    def classify_plaintext(self, article):
+        print("> topicModel: nn inference")
+        print(article)
+        v,s = self.use_vectorizer(" ".join(article))
+        e = self.get_entities(article)
+        vec = v
+        vec=np.array([np.array(vec, dtype=np.float64)], dtype=np.float64)
+        label = self.network.classify(vec)
+        print("> topicModel: nn inference complete")
+        return(v,s,e,self.tag_list[label])
     def use_vectorizer(self, article):
         if(self.doc2vecmodel):
             inferred_vector = self.doc2vecmodel.infer_vector(article.split(" "))
@@ -237,7 +251,7 @@ class internals:
 
     
 def train():
-    a = internals(None)
+    a = internals(None,None)
     df = pd.read_json('./data/News_Category_Dataset_v3.json', lines = True)
     train_sample_one = a.build_clean_sample(df, 'short_description', 'category')
     df2 = pd.read_csv ('./data/CNN_Articles.csv',on_bad_lines='skip')
@@ -255,6 +269,7 @@ def train():
     training_samples = a.correct_tags(training_samples)
     #print(training_samples.tag.unique())
     #train_sample_two = 
+    import pickle
     training_corpus,testing_corpus = a.build_corpus(training_samples)
     file = open('./data/corpus_b', 'wb')
     savedversion = training_corpus+testing_corpus
@@ -265,7 +280,7 @@ def train():
 
 def save_corpus_to_pkl():
     import pickle
-    a = internals(None)
+    a = internals(None,None)
     df4 = pd.read_csv('./data/news.tsv',on_bad_lines='skip', sep='\t')
     train_sample_four = a.build_clean_sample(df4, 'News body', 'Topic')
 
@@ -282,7 +297,7 @@ def save_corpus_to_pkl():
 
 def load_corpus_from_pkl():
     import pickle
-    file = open('./data/corpus', 'rb')
+    file = open('./data/corpus_b', 'rb')
     object_file = pickle.load(file)
     return(object_file)
     file.close()
@@ -290,14 +305,14 @@ def load_corpus_from_pkl():
 
 
 def test_vectorizer(path):
-    a = internals(path)
+    a = internals(path,None)
     f = input()
     output = a.use_vectorizer(f)
     print(output)
 
 
 def train_neural_network():
-    a = internals('./trainedmodels/20230215T185149')
+    a = internals('./trainedmodels/20230217T074231',None)
     q = load_corpus_from_pkl()
 
     q = np.array(q, dtype=object)
@@ -308,8 +323,8 @@ def train_neural_network():
     p_y = []
     example_count = 0
     indexing = 0
-    while example_count < 10000 and indexing<len(x):
-        if(y[indexing][0] in a.tag_list):
+    while example_count < 100000 and indexing<len(x):
+        if(y[indexing][0] in a.tag_list and y[indexing][0]!="NEWS"):
             p_x.append(x[indexing])
             p_y.append(a.tag_list.index(y[indexing][0]))
             #print(x[indexing], a.tag_list.index(y[indexing][0]))
@@ -332,30 +347,24 @@ def train_neural_network():
     X_test=np.array([np.array(xi, dtype=np.float64) for xi in test[:,0]])
     Y_test=np.array([np.array(np.array(xi, dtype=np.float64)) for xi in test[:,1]])
 
-    #print(train[:,0].shape)
-    #print(train[0][0])
-    #print(Y_train.shape)
-    #print(test[0])
     topicNetwork.train_network(X_train,Y_train,X_test,Y_test)
-    #print(train, test)
+
         
 #@train_neural_network()
 def test_network():
-    a = internals('./trainedmodels/20230215T185149')
+    a = internals('./trainedmodels/20230217T074231',None)
     q = load_corpus_from_pkl()
-    network = topicNetwork.network_handler()
+    network = topicNetwork.network_handler('./trainedmodels/dvlabeler10000')
     print(len(q))
     for x in range(0, 10):
         print(" ".join(q[x][0]))
         v,s = a.use_vectorizer(" ".join(q[x][0]))
-
         vec = v
-        #print(vec)
         vec=np.array([np.array(vec, dtype=np.float64)], dtype=np.float64)
         label = network.classify(vec)
         print(a.tag_list[label])
         print(s)
-       #print(q[x][1])
+
 #train_neural_network()
 #test_network()
-train()
+#train()

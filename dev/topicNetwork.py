@@ -145,8 +145,8 @@ def train_network(X_train, y_train, X_test, y_test):
     torch.save(model, './trainedmodels/dvlabeler'+str(total))
 
 class network_handler:
-    def __init__(self):
-        self.model = torch.load('./trainedmodels/dvlabeler')
+    def __init__(self, path):
+        self.model = torch.load(path)
     def classify(self, X):
         outputs = self.model(torch.from_numpy(X))
         _, predicted = torch.max(outputs.data, 1)

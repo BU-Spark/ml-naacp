@@ -34,35 +34,59 @@ class pipelining:
     def rss_in(self):
         self.rss_handler.rss_parse()
         data = self.rss_handler.acquiredToDF()
-        #print(data.head())
+
+        #this returns a dataframe with columns:
+        #'title','link','description','content','category','pubDate','UID'
         return(data)
 
     #write to firebase
-    def firebase_out(self):
+    def firebase_out(self,df):
+        #add integration w/ firebase connect. 
+        #would do this but not sure how SE team wants data + what they want 
+        #at this point 
+        #should be straight forward though
+        # - aidan
         pass
 
-#model = Doc2Vec.load(fname)
 class live_predictions:
-    def __init__(self, doc2vec_model_path):
+    def __init__(self, doc2vec_model_path, nn_path):
         #load doc2vec model from path
-        self.engine = topicModel.internals(doc2vec_model_path)
+        self.engine = topicModel.internals(doc2vec_model_path, nn_path)
         pass
 
     #entry point for running model on piece of input text
     def make(self, input_text):
 
-        inferred_vector,similar_tags = self.engine.use_vectorizer(input_text)
-        return(inferred_vector, similar_tags)
+        #inferred_vector,similar_tags = self.engine.use_vectorizer(input_text)
+        inferred_vector,similar_tags,entities,label = self.engine.classify_plaintext(input_text)
+        df_return = pd.DataFrame(columns=['vector', 'simlar_tags', 'entities', 'label'])
+        df_return['vector'] = input_text
+        df_return['similar_tags'] = pd.Series([similar_tags])
+        df_return['entities'] = pd.Series([entities])
+        df_return['label'] = label
+        return(df_return)
         pass
     
     
-
+def load_and_run():
 #define RSS & Firestore pipelines
-a = pipelining()
-#define topic engine
-lp0 = live_predictions("./trainedmodels/20230215T185149")
-#lp1 = live_predictions("./trainedmodels/xxxxxxxxxxxxxx")
-data = a.rss_in()
-if(data):
-    lp0.make(data.iloc[0]['content'])
+    a = pipelining()
+    #define topic engine(s)
+    lp0 = live_predictions("./trainedmodels/20230215T185149", "./trainedmodels/dvlabeler")
+    lp1 = live_predictions("./trainedmodels/20230217T074231", "./trainedmodels/dvlabeler10000")
+    #lp1 = live_predictions("./trainedmodels/xxxxxxxxxxxxxx")
+    data = a.rss_in()
+    if(isinstance(data, pd.DataFrame)):
+        for index, row  in data.iterrows():
+            guess_0 = lp0.make(row['content'])
+            guess_1 = lp1.make(row['content'])
+            #print(guess_0)
+            #print(guess_1)
+            file = open('./temp/runlog.txt','a')
+            items = [row,guess_0,guess_1]
+            for item in items:
+	            file.write(str(item)+"\n")
+            file.close()
+            a.firebase_out([data,guess_0,guess_1])
 
+load_and_run()
