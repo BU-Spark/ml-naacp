@@ -77,6 +77,10 @@ def load_and_run():
     #lp1 = live_predictions("./trainedmodels/xxxxxxxxxxxxxx")
     data = a.rss_in()
     if(isinstance(data, pd.DataFrame)):
+        label_0 = []
+        label_1 = []
+        sim_tags_0 = []
+        sim_tags_1 = []
         for index, row  in data.iterrows():
             guess_0 = lp0.make(row['content'])
             guess_1 = lp1.make(row['content'])
@@ -84,9 +88,18 @@ def load_and_run():
             #print(guess_1)
             file = open('./temp/runlog.txt','a')
             items = [row,guess_0,guess_1]
+            label_0.append(guess_0['label'].iloc[0])
+            label_1.append(guess_1['label'].iloc[0])
+            sim_tags_0.append(guess_0['similar_tags'].iloc[0])
+            sim_tags_1.append(guess_1['similar_tags'].iloc[0])
             for item in items:
 	            file.write(str(item)+"\n")
             file.close()
             a.firebase_out([data,guess_0,guess_1])
+        data['label_0'] = label_0
+        data['similar_tags_0'] = sim_tags_0
+        data['label_1'] = label_1
+        data['similar_tags_1'] = sim_tags_1
+        data.to_csv('./temp/runlog.csv')
 
 load_and_run()
