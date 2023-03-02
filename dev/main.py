@@ -87,6 +87,6 @@ def load_and_run():
             for item in items:
 	            file.write(str(item)+"\n")
             file.close()
-            a.firebase_out([data,guess_0,guess_1])
+            #a.firebase_out([data,guess_0,guess_1])
 
 load_and_run()

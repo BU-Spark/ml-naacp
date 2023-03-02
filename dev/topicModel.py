@@ -366,5 +366,5 @@ def test_network():
         print(s)
 
 #train_neural_network()
-#test_network()
+test_network()
 #train()

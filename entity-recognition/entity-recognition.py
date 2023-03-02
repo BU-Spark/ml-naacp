@@ -16,9 +16,9 @@ def get_locations(article_text):
     # get locations using NER  
     nlp = spacy.load("en_core_web_lg")
     doc = nlp(article_text)
-
+    print(doc.ents)
     # get the locations only, remove duplicates from results 
-    locations = set([(X.text, X.label_) for X in doc.ents if X.label_ == 'GPE']) # or X.label_ == 'LOC' or X.label_ == 'FAC' or X.label_ == 'ORG'
+    locations = set([(X.text, X.label_) for X in doc.ents if X.label_ == 'GPE' or X.label_ == 'FAC' or X.label_ == 'ORG']) # or X.label_ == 'LOC' or X.label_ == 'FAC' or X.label_ == 'ORG'
     
     return locations
 
@@ -115,7 +115,7 @@ def run_pipeline(text, year, dsource, dname, state, API_KEY):
     locations = get_locations(text)
     #locations = {('Boston', 'GPE'), ('Massachusetts', 'GPE'), ('Boston city', 'GPE'), ('Roxbury', 'GPE'), ('Fitchburg', 'GPE'), ('Medford', 'GPE')}
     print(locations)
-    location_geocode = get_location_geocode(API_KEY, locations)
+    #location_geocode = get_location_geocode(API_KEY, locations)
     #location_geocode = {'Boston': {'lat': 42.3600825, 'lon': -71.0588801}, 'Massachusetts': {'lat': 42.4072107, 'lon': -71.3824374}, 'Boston city': {'lat': 42.3600825, 'lon': -71.0588801}, 'Roxbury': {'lat': 42.3125672, 'lon': -71.0898796}, 'Fitchburg': {'lat': 42.5834228, 'lon': -71.8022955}, 'Medford': {'lat': 42.4184296, 'lon': -71.1061639}}
     print(location_geocode)
     census_geos = get_census_geos(location_geocode)
