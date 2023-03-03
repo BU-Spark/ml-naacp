@@ -1,5 +1,4 @@
 import pandas as pd
-import en_core_web_sm
 import spacy
 import googlemaps 
 import requests
