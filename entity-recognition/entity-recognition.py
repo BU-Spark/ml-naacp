@@ -2,13 +2,17 @@ import pandas as pd
 import spacy
 import googlemaps 
 import requests
+from transformers import AutoTokenizer, AutoModelForTokenClassification
+from transformers import pipeline
+from bs4 import BeautifulSoup 
+import nltk
 
 import secret
 
 
 def get_locations(article_text):
     """
-    get location names from article using NER 
+    get location names from article using NER - spacy 
     input: article_text as a string, aggregate of h1, h2, lede, and body
     returns: locations - set of tuples of (NAME, 'GPE')
     """
@@ -20,6 +24,37 @@ def get_locations(article_text):
     locations = set([(X.text, X.label_) for X in doc.ents if X.label_ == 'GPE']) # or X.label_ == 'LOC' or X.label_ == 'FAC' or X.label_ == 'ORG'
     
     return locations
+
+def get_locations_bert(article_text):
+    """
+    get location names from article using NER - bert model 
+    https://huggingface.co/dslim/bert-base-NER
+    input: article_text as a string, aggregate of h1, h2, lede, and body
+    returns: locations - set of tuples of (NAME, 'LOC') and organizations - set of tuples (NAME, 'ORG) mentioned in the article
+    """
+    tokenizer = AutoTokenizer.from_pretrained("dslim/bert-large-NER")
+    model = AutoModelForTokenClassification.from_pretrained("dslim/bart-large-NER")
+    nlp = pipeline("ner", model=model, tokenizer=tokenizer, aggregation_strategy="simple")
+    
+    ner_results = nlp(article_text)
+    locations = set([(X['word'],X['entity_group']) for X in ner_results if X['entity_group'] == 'LOC'])
+    orgs = set([(X['word'], X['entity_group']) for X in ner_results if X['entity_group'] == 'ORG'])
+
+    return locations, orgs
+
+def get_lede(headline, article_text, num_sent):
+    """
+    get the lede from the article_text 
+    input: headline of the article if it is provided, atricle_text as a string, and num_sent - number of sentences to return 
+    returns: headline and first x (num_sent) sentences 
+    """
+    
+    soup = BeautifulSoup(article_text, "html.parser")
+    clean_text = soup.get_text()
+    lede = nltk.sent_tokenize(clean_text)[:num_sent] # returns a list
+    lede = headline + ".".join(lede)
+
+    return lede
 
 def get_location_geocode(API_KEY, locations):
     """
