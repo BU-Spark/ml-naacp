@@ -7,7 +7,7 @@ import requests
 import secret
 
 
-def get_locations(article_text):
+def get_locations(article_text, labels_):
     """
     get location names from article using NER 
     input: article_text as a string, aggregate of h1, h2, lede, and body
@@ -18,7 +18,7 @@ def get_locations(article_text):
     doc = nlp(article_text)
 
     # get the locations only, remove duplicates from results 
-    locations = set([(X.text, X.label_) for X in doc.ents if X.label_ == 'GPE']) # or X.label_ == 'LOC' or X.label_ == 'FAC' or X.label_ == 'ORG'
+    locations = set([(X.text, X.label_) for X in doc.ents if X.label_ in labels_]) # or X.label_ == 'LOC' or X.label_ == 'FAC' or X.label_ == 'ORG'
     
     return locations
 
