@@ -1,0 +1,28 @@
+/projectnb/sparkgrp/ds-naacp-media-bias/venvs/gensim-venv/lib/python3.8/site-packages/spacy/util.py:865: UserWarning: [W095] Model 'en_core_web_trf' (3.5.0) was trained with spaCy v3.5 and may not be 100% compatible with the current version (3.4.0). If you see errors or degraded performance, download a newer compatible model or retrain your custom model with the current spaCy version. For more details and available updates, run: python -m spacy validate
+  warnings.warn(warn_msg)
+> topicModel: internals initializing
+> topicModel: loading spacy dep. tagging model
+> topicModel: loaded spacy dep. tagging model
+> topicModel: internals intialized
+Traceback (most recent call last):
+  File "topicModel.py", line 376, in <module>
+    train()
+  File "topicModel.py", line 256, in train
+    df = pd.read_csv ('../../projectnb/sparkgrp/ds-naacp-media-bias/pens_news_data.tsv', sep='\t', on_bad_lines='skip')
+  File "/usr4/ugrad/yagev/.local/lib/python3.8/site-packages/pandas/util/_decorators.py", line 311, in wrapper
+    return func(*args, **kwargs)
+  File "/usr4/ugrad/yagev/.local/lib/python3.8/site-packages/pandas/io/parsers/readers.py", line 586, in read_csv
+    return _read(filepath_or_buffer, kwds)
+  File "/usr4/ugrad/yagev/.local/lib/python3.8/site-packages/pandas/io/parsers/readers.py", line 482, in _read
+    parser = TextFileReader(filepath_or_buffer, **kwds)
+  File "/usr4/ugrad/yagev/.local/lib/python3.8/site-packages/pandas/io/parsers/readers.py", line 811, in __init__
+    self._engine = self._make_engine(self.engine)
+  File "/usr4/ugrad/yagev/.local/lib/python3.8/site-packages/pandas/io/parsers/readers.py", line 1040, in _make_engine
+    return mapping[engine](self.f, **self.options)  # type: ignore[call-arg]
+  File "/usr4/ugrad/yagev/.local/lib/python3.8/site-packages/pandas/io/parsers/c_parser_wrapper.py", line 51, in __init__
+    self._open_handles(src, kwds)
+  File "/usr4/ugrad/yagev/.local/lib/python3.8/site-packages/pandas/io/parsers/base_parser.py", line 222, in _open_handles
+    self.handles = get_handle(
+  File "/usr4/ugrad/yagev/.local/lib/python3.8/site-packages/pandas/io/common.py", line 701, in get_handle
+    handle = open(
+FileNotFoundError: [Errno 2] No such file or directory: '../../projectnb/sparkgrp/ds-naacp-media-bias/pens_news_data.tsv'

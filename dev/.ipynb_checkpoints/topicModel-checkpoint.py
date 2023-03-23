@@ -253,7 +253,7 @@ class internals:
     
 def train():
     a = internals(None,None)
-    df = pd.read_csv ('../../projectnb/sparkgrp/ds-naacp-media-bias/pens_news_data.tsv', on_bad_lines='skip', sep='\t')
+    df = pd.read_csv ('../../projectnb/sparkgrp/ds-naacp-media-bias/pens_news_data.tsv', sep='\t', on_bad_lines='skip')
     train_sample_one = a.build_clean_sample(df, 'News body', 'Category')
     # df = pd.read_json('./data/News_Category_Dataset_v3.json', lines = True)
     # train_sample_one = a.build_clean_sample(df, 'short_description', 'category')
@@ -286,7 +286,7 @@ def train():
 def save_corpus_to_pkl():
     import pickle
     a = internals(None,None)
-    df4 = pd.read_csv('./data/news.tsv',on_bad_lines='skip', sep='\t')
+    df4 = pd.read_csv('./data/news.tsv', sep='\t', on_bad_lines='skip')
     train_sample_four = a.build_clean_sample(df4, 'News body', 'Topic')
 
 
@@ -373,6 +373,6 @@ def test_network():
         print(a.tag_list[label])
         print(s)
 
-#train()
-#train_neural_network()
-#test_network()
+train()
+train_neural_network()
+test_network()
