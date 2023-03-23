@@ -252,19 +252,22 @@ class internals:
     
 def train():
     a = internals(None,None)
-    df = pd.read_json('./data/News_Category_Dataset_v3.json', lines = True)
-    train_sample_one = a.build_clean_sample(df, 'short_description', 'category')
-    df2 = pd.read_csv ('./data/CNN_Articles.csv',on_bad_lines='skip')
-    train_sample_two = a.build_clean_sample(df2, 'Article text', 'Category')
-    df3 = pd.read_csv ('./data/CNN_Articles_2.csv',on_bad_lines='skip')
-    train_sample_three = a.build_clean_sample(df3, 'Article text', 'Category')
+    df = pd.read_csv ('./data/pens_news_data.tsv', on_bad_lines='skip', sep='\t')
+    train_sample_one = a.build_clean_sample(df, 'News body', 'Category')
+    # df = pd.read_json('./data/News_Category_Dataset_v3.json', lines = True)
+    # train_sample_one = a.build_clean_sample(df, 'short_description', 'category')
+    # df2 = pd.read_csv ('./data/CNN_Articles.csv',on_bad_lines='skip')
+    # train_sample_two = a.build_clean_sample(df2, 'Article text', 'Category')
+    # df3 = pd.read_csv ('./data/CNN_Articles_2.csv',on_bad_lines='skip')
+    # train_sample_three = a.build_clean_sample(df3, 'Article text', 'Category')
 
     #df4 = pd.read_csv('./data/news.tsv',on_bad_lines='skip', sep='\t')
     #train_sample_four = a.build_clean_sample(df4, 'News body', 'Topic')
 
     #training_samples = pd.concat([train_sample_one,train_sample_two,train_sample_three])#, train_sample_four],ignore_index=True)
     #print(training_samples.tag.unique())
-    training_samples = pd.concat([train_sample_one,train_sample_two,train_sample_three], ignore_index=True)
+    # training_samples = pd.concat([train_sample_one,train_sample_two,train_sample_three], ignore_index=True)
+    training_samples = pd.concat([train_sample_one], ignore_index=True)
 
     training_samples = a.correct_tags(training_samples)
     #print(training_samples.tag.unique())
