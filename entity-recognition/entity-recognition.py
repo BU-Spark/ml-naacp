@@ -42,6 +42,7 @@ def get_locations_bert(article_text):
 
     return locations, orgs
 
+
 def get_lede(headline, article_text, num_sent):
     """
     get the lede from the article_text 
@@ -144,6 +145,22 @@ def get_census_demographics(year, dsource, dname, tract, county, state):
     census_response_json = census_response.json()
 
     return census_response_json
+
+def build_neighborhood_dicts():
+    neighborhood_df = pd.read_csv("tiger2020_boston_censusreporter.csv")
+    tract2neighbor = {}
+    block2neighbor = {}
+    for i in range(len(neighborhood_df)):
+        tract2neighbor[str(neighborhood_df['geoid_trim'][i])[0:11]] = neighborhood_df['name'][i]
+        block2neighbor[str(neighborhood_df['geoid_trim'])] = neighborhood_df['name'][i]
+
+    return tract2neighbor, block2neighbor
+
+def tract_to_neighborhood(tract):
+    pass
+
+def block_to_neighborhood():
+    pass
 
 def run_pipeline(text, year, dsource, dname, state, API_KEY):
     locations = get_locations(text)
