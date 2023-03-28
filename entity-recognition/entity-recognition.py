@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 import nltk
 
 import secret
+import censusNeighborhood
 
 
 def get_locations(article_text):
@@ -146,21 +147,6 @@ def get_census_demographics(year, dsource, dname, tract, county, state):
 
     return census_response_json
 
-def build_neighborhood_dicts():
-    neighborhood_df = pd.read_csv("tiger2020_boston_censusreporter.csv")
-    tract2neighbor = {}
-    block2neighbor = {}
-    for i in range(len(neighborhood_df)):
-        tract2neighbor[str(neighborhood_df['geoid_trim'][i])[0:11]] = neighborhood_df['name'][i]
-        block2neighbor[str(neighborhood_df['geoid_trim'])] = neighborhood_df['name'][i]
-
-    return tract2neighbor, block2neighbor
-
-def tract_to_neighborhood(tract):
-    pass
-
-def block_to_neighborhood():
-    pass
 
 def run_pipeline(text, year, dsource, dname, state, API_KEY):
     locations = get_locations(text)
