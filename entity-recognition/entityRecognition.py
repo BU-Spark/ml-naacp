@@ -153,14 +153,18 @@ def run_pipeline(text, year, dsource, dname, state, API_KEY):
     locations, orgs = get_locations_bert(text)
     #locations = {('Boston', 'GPE'), ('Massachusetts', 'GPE'), ('Boston city', 'GPE'), ('Roxbury', 'GPE'), ('Fitchburg', 'GPE'), ('Medford', 'GPE')}
     
-    location_geocode = get_location_geocode(API_KEY, locations)
-    org_geocode = get_location_geocode(API_KEY, orgs)
+    # check if any locations or organizations were recognized
+
+    #location_geocode = get_location_geocode(API_KEY, locations)
+    #org_geocode = get_location_geocode(API_KEY, orgs)
     #location_geocode = {'Boston': {'lat': 42.3600825, 'lon': -71.0588801}, 'Massachusetts': {'lat': 42.4072107, 'lon': -71.3824374}, 'Boston city': {'lat': 42.3600825, 'lon': -71.0588801}, 'Roxbury': {'lat': 42.3125672, 'lon': -71.0898796}, 'Fitchburg': {'lat': 42.5834228, 'lon': -71.8022955}, 'Medford': {'lat': 42.4184296, 'lon': -71.1061639}}
+    location_geocode = {'Massachusetts': {'lat': 42.4072107, 'lon': -71.3824374}, 'Salem': {'lat': 42.5197473, 'lon': -70.8954626}, 'Salem City Hall': {'lat': 42.5218851, 'lon': -70.8956157}}
     print(location_geocode)
     #print(org_geocode)
     #location_geocode = {'Salem': {'lat': 42.5197473, 'lon': -70.8954626}, 'Massachusetts': {'lat': 42.4072107, 'lon': -71.3824374}, 'Salem City Hall': {'lat': 42.5218851, 'lon': -70.8956157}}
     #org_geocode = ""
     census_geos = get_census_geos(location_geocode) #| org_geocode) # combining dictionaries
+
 
     result = []
     mappings = censusNeighborhood.neighborhood_mapping()
@@ -168,33 +172,36 @@ def run_pipeline(text, year, dsource, dname, state, API_KEY):
         place_info = {}
         county = census_geos[place_name]['county']
         tract = census_geos[place_name]['tract']
-        print(tract)
+        
+        try:
+            demographic_results = get_census_demographics(year, dsource, dname, tract, county, state)
 
-        if mappings.tract_mapping[state + county + tract]: # get corresponding neighborhood
-            place_info[place_name]['neighborhood'] = mappings.tract_mapping[state + county + tract]
-            try:
-                demographic_results = get_census_demographics(year, dsource, dname, tract, county, state)
+            # build result dictionary 
+            place_info[place_name] = {'county_code': county} 
+            place_info[place_name] = {'county_name': demographic_results[1][0]}
+            place_info[place_name]['tract'] = tract
+            geoid_tract = state + county + tract # this includes the state and county and tract number
+            place_info[place_name]['geoid_tract'] = geoid_tract
 
-                # build result dictionary 
-                place_info[place_name] = {'county_code': county} 
-                place_info[place_name] = {'county_name': demographic_results[1][0]}
-                place_info[place_name]['tract'] = tract 
-                place_info[place_name]['demographics'] = {
-                    'p2_001n': demographic_results[1][1], # total population 
-                    'p2_002n': demographic_results[1][2], # total hispanic or latino 
-                    'p2_003n': demographic_results[1][3], # total not hispanic or latino 
-                    'p2_004n': demographic_results[1][4], # total not hispanic or latino - pop of one race
-                    'p2_005n': demographic_results[1][5], # total not hispanic or latino - pop of one race - white alone 
-                    'p2_006n': demographic_results[1][6], # total not hispanic or latino - pop of one race - black or african american alone
-                    'p2_007n': demographic_results[1][7], # total not hispanic or latino - pop of one race - american indian and alaska native alone
-                    'p2_008n': demographic_results[1][8], # total not hispanic or latino - pop of one race - asian alone 
-                    'p2_009n': demographic_results[1][9], # total not hispanic or latino - pop of one race - native hawaiian and other pacific islander alone
-                    'p2_010n': demographic_results[1][10] # total not hispanic or latino - pop of one race - some other race alone 
-                } 
-                result.append(place_info)
-            except Exception as e:
-                print(e)
-                print("Unable to get census demographics for: " + place_name)
+            if mappings.tract_mapping.get(geoid_tract): # get corresponding boston neighborhood 
+                place_info[place_name]['neighborhood'] = mappings.tract_mapping[state + county + tract]
+            
+            place_info[place_name]['demographics'] = {
+                'p2_001n': demographic_results[1][1], # total population 
+                'p2_002n': demographic_results[1][2], # total hispanic or latino 
+                'p2_003n': demographic_results[1][3], # total not hispanic or latino 
+                'p2_004n': demographic_results[1][4], # total not hispanic or latino - pop of one race
+                'p2_005n': demographic_results[1][5], # total not hispanic or latino - pop of one race - white alone 
+                'p2_006n': demographic_results[1][6], # total not hispanic or latino - pop of one race - black or african american alone
+                'p2_007n': demographic_results[1][7], # total not hispanic or latino - pop of one race - american indian and alaska native alone
+                'p2_008n': demographic_results[1][8], # total not hispanic or latino - pop of one race - asian alone 
+                'p2_009n': demographic_results[1][9], # total not hispanic or latino - pop of one race - native hawaiian and other pacific islander alone
+                'p2_010n': demographic_results[1][10] # total not hispanic or latino - pop of one race - some other race alone 
+            } 
+            result.append(place_info)
+        except Exception as e:
+            print(e)
+            print("Unable to get census demographics for: " + place_name)
     return result
 
 
@@ -217,12 +224,17 @@ def main():
     text = get_lede(text, 5)
     temp = run_pipeline(text, year, dsource, dname, state, secret.API_KEY)
     result[df['UID'][idx]] = temp
+
     """
+    national_articles = []
     for idx in range(len(df)):
-        text = str(df['description'][idx]) + str(df['content'][idx])
-        text = get_lede(text, 5)
-        temp = run_pipeline(text, year, dsource, dname, state, secret.API_KEY)
-        result[df['UID'][idx]] = temp
+        if df['category'][idx] != "National": # not running on articles in National category because they usually contain geos outside of mass
+            text = str(df['description'][idx]) + str(df['content'][idx])
+            text = get_lede(text, 5)
+            temp = run_pipeline(text, year, dsource, dname, state, secret.API_KEY)
+            result[df['UID'][idx]] = temp
+        else:
+            national_articles.append(df['UID'][idx])
     """
     return result
 
