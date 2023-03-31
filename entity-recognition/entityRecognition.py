@@ -34,7 +34,7 @@ def get_locations_bert(article_text):
     returns: locations - set of tuples of (NAME, 'LOC') and organizations - set of tuples (NAME, 'ORG) mentioned in the article
     """
     tokenizer = AutoTokenizer.from_pretrained("dslim/bert-large-NER")
-    model = AutoModelForTokenClassification.from_pretrained("dslim/bart-large-NER")
+    model = AutoModelForTokenClassification.from_pretrained("dslim/bert-large-NER")
     nlp = pipeline("ner", model=model, tokenizer=tokenizer, aggregation_strategy="simple")
     
     ner_results = nlp(article_text)
@@ -44,17 +44,17 @@ def get_locations_bert(article_text):
     return locations, orgs
 
 
-def get_lede(headline, article_text, num_sent):
+def get_lede(text, num_sent):
     """
     get the lede from the article_text 
     input: headline of the article if it is provided, atricle_text as a string, and num_sent - number of sentences to return 
     returns: headline and first x (num_sent) sentences 
     """
     
-    soup = BeautifulSoup(article_text, "html.parser")
+    soup = BeautifulSoup(text, "html.parser")
     clean_text = soup.get_text()
     lede = nltk.sent_tokenize(clean_text)[:num_sent] # returns a list
-    lede = headline + ".".join(lede)
+    lede = ".".join(lede)
 
     return lede
 
@@ -149,59 +149,61 @@ def get_census_demographics(year, dsource, dname, tract, county, state):
 
 
 def run_pipeline(text, year, dsource, dname, state, API_KEY):
-    locations = get_locations(text)
+    #locations = get_locations(text)
+    locations, orgs = get_locations_bert(text)
     #locations = {('Boston', 'GPE'), ('Massachusetts', 'GPE'), ('Boston city', 'GPE'), ('Roxbury', 'GPE'), ('Fitchburg', 'GPE'), ('Medford', 'GPE')}
-    print(locations)
+    
     location_geocode = get_location_geocode(API_KEY, locations)
+    org_geocode = get_location_geocode(API_KEY, orgs)
     #location_geocode = {'Boston': {'lat': 42.3600825, 'lon': -71.0588801}, 'Massachusetts': {'lat': 42.4072107, 'lon': -71.3824374}, 'Boston city': {'lat': 42.3600825, 'lon': -71.0588801}, 'Roxbury': {'lat': 42.3125672, 'lon': -71.0898796}, 'Fitchburg': {'lat': 42.5834228, 'lon': -71.8022955}, 'Medford': {'lat': 42.4184296, 'lon': -71.1061639}}
     print(location_geocode)
-    census_geos = get_census_geos(location_geocode)
+    #print(org_geocode)
+    #location_geocode = {'Salem': {'lat': 42.5197473, 'lon': -70.8954626}, 'Massachusetts': {'lat': 42.4072107, 'lon': -71.3824374}, 'Salem City Hall': {'lat': 42.5218851, 'lon': -70.8956157}}
+    #org_geocode = ""
+    census_geos = get_census_geos(location_geocode) #| org_geocode) # combining dictionaries
 
     result = []
+    mappings = censusNeighborhood.neighborhood_mapping()
     for place_name in census_geos:
-        
         place_info = {}
         county = census_geos[place_name]['county']
         tract = census_geos[place_name]['tract']
+        print(tract)
 
-        try:
-            demographic_results = get_census_demographics(year, dsource, dname, tract, county, state)
+        if mappings.tract_mapping[state + county + tract]: # get corresponding neighborhood
+            place_info[place_name]['neighborhood'] = mappings.tract_mapping[state + county + tract]
+            try:
+                demographic_results = get_census_demographics(year, dsource, dname, tract, county, state)
 
-            place_info[place_name] = {'county_code': county} 
-            place_info[place_name] = {'county_name': demographic_results[1][0]}
-            place_info[place_name]['tract'] = tract 
-            place_info[place_name]['demographics'] = {
-                'p2_001n': demographic_results[1][1], # total population 
-                'p2_002n': demographic_results[1][2], # total hispanic or latino 
-                'p2_003n': demographic_results[1][3], # total not hispanic or latino 
-                'p2_004n': demographic_results[1][4], # total not hispanic or latino - pop of one race
-                'p2_005n': demographic_results[1][5], # total not hispanic or latino - pop of one race - white alone 
-                'p2_006n': demographic_results[1][6], # total not hispanic or latino - pop of one race - black or african american alone
-                'p2_007n': demographic_results[1][7], # total not hispanic or latino - pop of one race - american indian and alaska native alone
-                'p2_008n': demographic_results[1][8], # total not hispanic or latino - pop of one race - asian alone 
-                'p2_009n': demographic_results[1][9], # total not hispanic or latino - pop of one race - native hawaiian and other pacific islander alone
-                'p2_010n': demographic_results[1][10] # total not hispanic or latino - pop of one race - some other race alone 
-            } 
-            result.append(place_info)
-        except Exception:
-            print("Unable to get census demographics for: " + place_name)
-    
+                # build result dictionary 
+                place_info[place_name] = {'county_code': county} 
+                place_info[place_name] = {'county_name': demographic_results[1][0]}
+                place_info[place_name]['tract'] = tract 
+                place_info[place_name]['demographics'] = {
+                    'p2_001n': demographic_results[1][1], # total population 
+                    'p2_002n': demographic_results[1][2], # total hispanic or latino 
+                    'p2_003n': demographic_results[1][3], # total not hispanic or latino 
+                    'p2_004n': demographic_results[1][4], # total not hispanic or latino - pop of one race
+                    'p2_005n': demographic_results[1][5], # total not hispanic or latino - pop of one race - white alone 
+                    'p2_006n': demographic_results[1][6], # total not hispanic or latino - pop of one race - black or african american alone
+                    'p2_007n': demographic_results[1][7], # total not hispanic or latino - pop of one race - american indian and alaska native alone
+                    'p2_008n': demographic_results[1][8], # total not hispanic or latino - pop of one race - asian alone 
+                    'p2_009n': demographic_results[1][9], # total not hispanic or latino - pop of one race - native hawaiian and other pacific islander alone
+                    'p2_010n': demographic_results[1][10] # total not hispanic or latino - pop of one race - some other race alone 
+                } 
+                result.append(place_info)
+            except Exception as e:
+                print(e)
+                print("Unable to get census demographics for: " + place_name)
     return result
 
 
 def main():
     # we probably won't be reading from a csv but this is just for testing the pipeline with some articles 
     # read data 
-    df = pd.read_csv("/Users/mvoong/Desktop/naacp-subneighborhood update/test-data/multiple_article_test.csv")
+    df = pd.read_csv("./gbh_rss/gbh-rss-test.csv")
 
-    # prepare the data 
-    i = 5
-    h1 = str(df['hl1'][i])
-    h2 = str(df['hl2'][i])
-    lede = str(df['lede'][i])
-    body = str(df['body'][i])
-    text = h1 + h2 + lede + body
-    article_id = df['content-id'][i]
+    # get lede (first x number of sentences)
 
     # set variables 
     year='2020'
@@ -210,11 +212,26 @@ def main():
     state='25' # state code 
 
     result = {}
+    idx = 0
+    text = str(df['description'][idx]) + str(df['content'][idx])
+    text = get_lede(text, 5)
     temp = run_pipeline(text, year, dsource, dname, state, secret.API_KEY)
-    result[article_id] = temp 
-    
+    result[df['UID'][idx]] = temp
+    """
+    for idx in range(len(df)):
+        text = str(df['description'][idx]) + str(df['content'][idx])
+        text = get_lede(text, 5)
+        temp = run_pipeline(text, year, dsource, dname, state, secret.API_KEY)
+        result[df['UID'][idx]] = temp
+    """
     return result
+
 
 if __name__ == "__main__":
     import json
-    print(json.dumps(main(),sort_keys=True, indent=2))
+    test = main()
+    print(json.dumps(test,sort_keys=True, indent=2))
+
+    with open('gbh-sample-test.json', 'w') as fp:
+        json.dump(test, fp)
+    
