@@ -1,62 +1,26 @@
 import pandas as pd
+import en_core_web_sm
 import spacy
 import googlemaps 
 import requests
-from transformers import AutoTokenizer, AutoModelForTokenClassification
-from transformers import pipeline
-from bs4 import BeautifulSoup 
-import nltk
 
 import secret
-import censusNeighborhood
 
 
-def get_locations(article_text):
+def get_locations(article_text, labels_):
     """
-    get location names from article using NER - spacy 
+    get location names from article using NER 
     input: article_text as a string, aggregate of h1, h2, lede, and body
     returns: locations - set of tuples of (NAME, 'GPE')
     """
     # get locations using NER  
     nlp = spacy.load("en_core_web_lg")
     doc = nlp(article_text)
-    print(doc.ents)
+
     # get the locations only, remove duplicates from results 
-    locations = set([(X.text, X.label_) for X in doc.ents if X.label_ == 'GPE' or X.label_ == 'FAC' or X.label_ == 'ORG']) # or X.label_ == 'LOC' or X.label_ == 'FAC' or X.label_ == 'ORG'
+    locations = set([(X.text, X.label_) for X in doc.ents if X.label_ in labels_]) # or X.label_ == 'LOC' or X.label_ == 'FAC' or X.label_ == 'ORG'
     
     return locations
-
-def get_locations_bert(article_text):
-    """
-    get location names from article using NER - bert model 
-    https://huggingface.co/dslim/bert-base-NER
-    input: article_text as a string, aggregate of h1, h2, lede, and body
-    returns: locations - set of tuples of (NAME, 'LOC') and organizations - set of tuples (NAME, 'ORG) mentioned in the article
-    """
-    tokenizer = AutoTokenizer.from_pretrained("dslim/bert-large-NER")
-    model = AutoModelForTokenClassification.from_pretrained("dslim/bert-large-NER")
-    nlp = pipeline("ner", model=model, tokenizer=tokenizer, aggregation_strategy="simple")
-    
-    ner_results = nlp(article_text)
-    locations = set([(X['word'],X['entity_group']) for X in ner_results if X['entity_group'] == 'LOC'])
-    orgs = set([(X['word'], X['entity_group']) for X in ner_results if X['entity_group'] == 'ORG'])
-
-    return locations, orgs
-
-
-def get_lede(text, num_sent):
-    """
-    get the lede from the article_text 
-    input: headline of the article if it is provided, atricle_text as a string, and num_sent - number of sentences to return 
-    returns: headline and first x (num_sent) sentences 
-    """
-    
-    soup = BeautifulSoup(text, "html.parser")
-    clean_text = soup.get_text()
-    lede = nltk.sent_tokenize(clean_text)[:num_sent] # returns a list
-    lede = ".".join(lede)
-
-    return lede
 
 def get_location_geocode(API_KEY, locations):
     """
@@ -147,48 +111,28 @@ def get_census_demographics(year, dsource, dname, tract, county, state):
 
     return census_response_json
 
-
 def run_pipeline(text, year, dsource, dname, state, API_KEY):
-    #locations = get_locations(text)
-    locations, orgs = get_locations_bert(text)
+    locations = get_locations(text)
     #locations = {('Boston', 'GPE'), ('Massachusetts', 'GPE'), ('Boston city', 'GPE'), ('Roxbury', 'GPE'), ('Fitchburg', 'GPE'), ('Medford', 'GPE')}
-    
-    # check if any locations or organizations were recognized
-
-    #location_geocode = get_location_geocode(API_KEY, locations)
-    #org_geocode = get_location_geocode(API_KEY, orgs)
-
     print(locations)
-    #location_geocode = get_location_geocode(API_KEY, locations)
+    location_geocode = get_location_geocode(API_KEY, locations)
     #location_geocode = {'Boston': {'lat': 42.3600825, 'lon': -71.0588801}, 'Massachusetts': {'lat': 42.4072107, 'lon': -71.3824374}, 'Boston city': {'lat': 42.3600825, 'lon': -71.0588801}, 'Roxbury': {'lat': 42.3125672, 'lon': -71.0898796}, 'Fitchburg': {'lat': 42.5834228, 'lon': -71.8022955}, 'Medford': {'lat': 42.4184296, 'lon': -71.1061639}}
-    location_geocode = {'Massachusetts': {'lat': 42.4072107, 'lon': -71.3824374}, 'Salem': {'lat': 42.5197473, 'lon': -70.8954626}, 'Salem City Hall': {'lat': 42.5218851, 'lon': -70.8956157}}
     print(location_geocode)
-    #print(org_geocode)
-    #location_geocode = {'Salem': {'lat': 42.5197473, 'lon': -70.8954626}, 'Massachusetts': {'lat': 42.4072107, 'lon': -71.3824374}, 'Salem City Hall': {'lat': 42.5218851, 'lon': -70.8956157}}
-    #org_geocode = ""
-    census_geos = get_census_geos(location_geocode) #| org_geocode) # combining dictionaries
-
+    census_geos = get_census_geos(location_geocode)
 
     result = []
-    mappings = censusNeighborhood.neighborhood_mapping()
     for place_name in census_geos:
+        
         place_info = {}
         county = census_geos[place_name]['county']
         tract = census_geos[place_name]['tract']
-        
+
         try:
             demographic_results = get_census_demographics(year, dsource, dname, tract, county, state)
 
-            # build result dictionary 
             place_info[place_name] = {'county_code': county} 
             place_info[place_name] = {'county_name': demographic_results[1][0]}
-            place_info[place_name]['tract'] = tract
-            geoid_tract = state + county + tract # this includes the state and county and tract number
-            place_info[place_name]['geoid_tract'] = geoid_tract
-
-            if mappings.tract_mapping.get(geoid_tract): # get corresponding boston neighborhood 
-                place_info[place_name]['neighborhood'] = mappings.tract_mapping[state + county + tract]
-            
+            place_info[place_name]['tract'] = tract 
             place_info[place_name]['demographics'] = {
                 'p2_001n': demographic_results[1][1], # total population 
                 'p2_002n': demographic_results[1][2], # total hispanic or latino 
@@ -202,18 +146,25 @@ def run_pipeline(text, year, dsource, dname, state, API_KEY):
                 'p2_010n': demographic_results[1][10] # total not hispanic or latino - pop of one race - some other race alone 
             } 
             result.append(place_info)
-        except Exception as e:
-            print(e)
+        except Exception:
             print("Unable to get census demographics for: " + place_name)
+    
     return result
 
 
 def main():
     # we probably won't be reading from a csv but this is just for testing the pipeline with some articles 
     # read data 
-    df = pd.read_csv("./gbh_rss/gbh-rss-test.csv")
+    df = pd.read_csv("/Users/mvoong/Desktop/naacp-subneighborhood update/test-data/multiple_article_test.csv")
 
-    # get lede (first x number of sentences)
+    # prepare the data 
+    i = 5
+    h1 = str(df['hl1'][i])
+    h2 = str(df['hl2'][i])
+    lede = str(df['lede'][i])
+    body = str(df['body'][i])
+    text = h1 + h2 + lede + body
+    article_id = df['content-id'][i]
 
     # set variables 
     year='2020'
@@ -222,31 +173,11 @@ def main():
     state='25' # state code 
 
     result = {}
-    idx = 0
-    text = str(df['description'][idx]) + str(df['content'][idx])
-    text = get_lede(text, 5)
     temp = run_pipeline(text, year, dsource, dname, state, secret.API_KEY)
-    result[df['UID'][idx]] = temp
-
-    """
-    national_articles = []
-    for idx in range(len(df)):
-        if df['category'][idx] != "National": # not running on articles in National category because they usually contain geos outside of mass
-            text = str(df['description'][idx]) + str(df['content'][idx])
-            text = get_lede(text, 5)
-            temp = run_pipeline(text, year, dsource, dname, state, secret.API_KEY)
-            result[df['UID'][idx]] = temp
-        else:
-            national_articles.append(df['UID'][idx])
-    """
+    result[article_id] = temp 
+    
     return result
-
 
 if __name__ == "__main__":
     import json
-    test = main()
-    print(json.dumps(test,sort_keys=True, indent=2))
-
-    with open('gbh-sample-test.json', 'w') as fp:
-        json.dump(test, fp)
-    
+    print(json.dumps(main(),sort_keys=True, indent=2))

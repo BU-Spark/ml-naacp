@@ -1,0 +1,7 @@
+pandas
+numpy
+googlemaps
+spacy
+requests
+matplotlib
+scikit-learn

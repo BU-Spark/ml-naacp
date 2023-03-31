@@ -4,27 +4,28 @@
 #handle reading and writing to firebase
 
 import requests
-import encryption
+#import encryption
 import json
 
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
-
+ 
+import firebase_secret
 
 class firebase_pipeline:
     def __init__(self):
-        self.url = None
-        self.serviceAccountPath = None
-        self.dbName = None #u'name'
+        self.url = firebase_secret.firebase_url
+        self.serviceAccountPath = firebase_secret.firebase_service_acct
+        self.dbName = firebase_secret.firebase_db_name #u'name'
 
         print("> Preparing Firestore access")
         try:
-            self.cred = credentials.Certificate(serviceAccountPath)
+            self.cred = credentials.Certificate(self.serviceAccountPath)
             # Use a service account.
-            self.app = firebase_admin.initialize_app(self.cred)
+            self.app = firebase_admin.initialize_app(self.cred, {'databaseURL': self.url })
             self.db = firestore.client()
-            self.db_ref = db.collection(dbName)
+            self.db_ref = self.db.collection(self.dbName)
             self.parity = True
         except Exception as e:
             print('> Err: The Firestore configuration has failed. See exception: ')
@@ -44,7 +45,7 @@ class firebase_pipeline:
             print(e)
 
     def read_rtdb(self):
-        res = requests.get(url)
+        res = requests.get(self.url)
         return(res)
 
     def write_rtdb(self, data):
@@ -53,5 +54,5 @@ class firebase_pipeline:
         #data = {"ea":ea, "ei":ei, "et":et}
         data = json.dumps(data)
         headers={'Content-Type': 'application/x-www-form-urlencoded',}
-        res = requests.put(url, data=data, headers=headers)
+        res = requests.put(self.url, data=data, headers=headers)
         return(res)
