@@ -253,8 +253,8 @@ class internals:
     
 def train():
     a = internals(None,None)
-    df = pd.read_csv ('../../projectnb/sparkgrp/ds-naacp-media-bias/pens_news_data.tsv', sep='\t', on_bad_lines='skip')
-    train_sample_one = a.build_clean_sample(df, 'News body', 'Category')
+    df = pd.read_csv ('/projectnb/sparkgrp/ds-naacp-media-bias/pens_news_data.tsv', sep='\t', on_bad_lines='skip')
+    train_sample_one = a.build_clean_sample(df, 'News body', 'Topic')
     # df = pd.read_json('./data/News_Category_Dataset_v3.json', lines = True)
     # train_sample_one = a.build_clean_sample(df, 'short_description', 'category')
     # df2 = pd.read_csv ('./data/CNN_Articles.csv',on_bad_lines='skip')
@@ -362,7 +362,7 @@ def test_network():
     # a = internals('./trainedmodels/20230217T074231',None)
     a = internals('./trainedmodels/pens_model',None)
     q = load_corpus_from_pkl()
-    network = topicNetwork.network_handler('./trainedmodels/dvlabeler10000')
+    network = topicNetwork.network_handler('./trainedmodels/dvlabeler595')
     print(len(q))
     for x in range(0, 10):
         print(" ".join(q[x][0]))
@@ -373,6 +373,6 @@ def test_network():
         print(a.tag_list[label])
         print(s)
 
-train()
-train_neural_network()
+#train()
+#train_neural_network()
 test_network()

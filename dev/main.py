@@ -74,24 +74,30 @@ def load_and_run():
     #define topic engine(s)
     lp0 = live_predictions("./trainedmodels/20230215T185149", "./trainedmodels/dvlabeler")
     lp1 = live_predictions("./trainedmodels/20230217T074231", "./trainedmodels/dvlabeler10000")
+    lp2 = live_predictions("./trainedmodels/pens_model", "./trainedmodels/dvlabeler595")
     #lp1 = live_predictions("./trainedmodels/xxxxxxxxxxxxxx")
     data = a.rss_in()
     if(isinstance(data, pd.DataFrame)):
         label_0 = []
         label_1 = []
+        label_2 = []
         sim_tags_0 = []
         sim_tags_1 = []
+        sim_tags_2 = []
         for index, row  in data.iterrows():
             guess_0 = lp0.make(row['content'])
             guess_1 = lp1.make(row['content'])
+            guess_2 = lp2.make(row['content'])
             #print(guess_0)
             #print(guess_1)
             file = open('./temp/runlog.txt','a')
             items = [row,guess_0,guess_1]
             label_0.append(guess_0['label'].iloc[0])
             label_1.append(guess_1['label'].iloc[0])
+            label_2.append(guess_2['label'].iloc[0])
             sim_tags_0.append(guess_0['similar_tags'].iloc[0])
             sim_tags_1.append(guess_1['similar_tags'].iloc[0])
+            sim_tags_2.append(guess_2['similar_tags'].iloc[0])
             for item in items:
 	            file.write(str(item)+"\n")
             file.close()
@@ -100,6 +106,8 @@ def load_and_run():
         data['similar_tags_0'] = sim_tags_0
         data['label_1'] = label_1
         data['similar_tags_1'] = sim_tags_1
+        data['label_2'] = label_2
+        data['similar_tags_2'] = sim_tags_2
         data.to_csv('./temp/runlog.csv')
 
 load_and_run()

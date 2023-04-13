@@ -4,14 +4,19 @@
 
 #$ -P sparkgrp
 
+# Specify hard time limit for the job. 
+#   The job will be aborted if it runs longer than this time.
+#   The default time is 12 hours
+
+#$ -l h_rt=48:00:00
+
 # Send an email when the job finishes or if it is aborted (by default no email is sent).
 
 #$ -m ea
 
-# Request a whole 28 processor node with at least 512 GB of RAM
+# Request a whole 36 processor node with at least 1 TB of RAM
 
-#$ -pe omp 28
-#$ -l mem_per_core=18G
+#$ -pe omp 36
 
 # Combine output and error files into a single file
 #$ -j y
