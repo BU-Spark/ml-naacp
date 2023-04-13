@@ -375,4 +375,4 @@ def test_network():
 
 #train()
 #train_neural_network()
-test_network()
+# test_network()
