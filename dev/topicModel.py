@@ -45,6 +45,18 @@ class internals:
         self.doc2vec_model_path = doc2vec_model_path
         self.doc2vecmodel = Doc2Vec.load(self.doc2vec_model_path)
         print("> topicModel: loaded model from path: ", doc2vec_model_path)
+    
+    ### ORIGINAL ###
+    """ def classify_plaintext(self, article):
+        print("> topicModel: nn inference")
+        print(article)
+        v,s = self.use_vectorizer(" ".join(article))
+        e = self.get_entities(article)
+        vec = v
+        vec=np.array([np.array(vec, dtype=np.float64)], dtype=np.float64)
+        label = self.network.classify(vec)
+        print("> topicModel: nn inference complete")
+        return(v,s,e,self.tag_list[label]) """
 
     def classify_plaintext(self, article):
         print("> topicModel: nn inference")
@@ -54,8 +66,11 @@ class internals:
         vec = v
         vec=np.array([np.array(vec, dtype=np.float64)], dtype=np.float64)
         label = self.network.classify(vec)
+        tags = []
+        for v in label[0]:
+            tags.append(self.tag_list[v])
         print("> topicModel: nn inference complete")
-        return(v,s,e,self.tag_list[label])
+        return(v,s,e,tags)
     def use_vectorizer(self, article):
         if(self.doc2vecmodel):
             inferred_vector = self.doc2vecmodel.infer_vector(article.split(" "))
@@ -373,6 +388,11 @@ def test_network():
         print(a.tag_list[label])
         print(s)
 
+<<<<<<< Updated upstream
 #train()
 #train_neural_network()
+=======
+# train()
+# train_neural_network()
+>>>>>>> Stashed changes
 # test_network()

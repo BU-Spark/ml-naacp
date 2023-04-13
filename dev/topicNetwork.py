@@ -144,13 +144,23 @@ def train_network(X_train, y_train, X_test, y_test):
 
     torch.save(model, './trainedmodels/dvlabeler'+str(total))
 
-class network_handler:
+### ORIGINAL FUNCTION ###
+""" class network_handler:
     def __init__(self, path):
         self.model = torch.load(path)
     def classify(self, X):
         outputs = self.model(torch.from_numpy(X))
         _, predicted = torch.max(outputs.data, 1)
-        return(predicted)
+        return predicted
+ """
 
-
+### TEST FUNCTION ###
+class network_handler:
+    def __init__(self, path):
+        self.model = torch.load(path)
+    def classify(self, X):
+        outputs = self.model(torch.from_numpy(X))
+        _, predicted = torch.topk(outputs.data, 3, 1)
+        print(predicted)
+        return predicted
 
