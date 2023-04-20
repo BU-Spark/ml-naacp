@@ -46,18 +46,7 @@ class internals:
         self.doc2vecmodel = Doc2Vec.load(self.doc2vec_model_path)
         print("> topicModel: loaded model from path: ", doc2vec_model_path)
     
-    ### ORIGINAL ###
-    """ def classify_plaintext(self, article):
-        print("> topicModel: nn inference")
-        print(article)
-        v,s = self.use_vectorizer(" ".join(article))
-        e = self.get_entities(article)
-        vec = v
-        vec=np.array([np.array(vec, dtype=np.float64)], dtype=np.float64)
-        label = self.network.classify(vec)
-        print("> topicModel: nn inference complete")
-        return(v,s,e,self.tag_list[label]) """
-
+    ### ORIGINAL FUNCTION###
     def classify_plaintext(self, article):
         print("> topicModel: nn inference")
         print(article)
@@ -66,11 +55,26 @@ class internals:
         vec = v
         vec=np.array([np.array(vec, dtype=np.float64)], dtype=np.float64)
         label = self.network.classify(vec)
-        tags = []
-        for v in label[0]:
-            tags.append(self.tag_list[v])
         print("> topicModel: nn inference complete")
-        return(v,s,e,tags)
+        return(v,s,e,self.tag_list[label])
+
+    ### TEST FUNCTION ###
+    """ def classify_plaintext(self, article):
+        print("> topicModel: nn inference")
+        print(article)
+        v,s = self.use_vectorizer(" ".join(article))
+        e = self.get_entities(article)
+        vec = v
+        vec=np.array([np.array(vec, dtype=np.float64)], dtype=np.float64)
+        label = self.network.classify(vec)
+        ## TEST OPTION 1
+        # tags = []
+        # for v in label[0]:
+           # tags.append(self.tag_list[v])
+        print("> topicModel: nn inference complete")
+        # return (v,s,e,tags)
+        return (v,s,e,self.tag_list[label]) """
+    
     def use_vectorizer(self, article):
         if(self.doc2vecmodel):
             inferred_vector = self.doc2vecmodel.infer_vector(article.split(" "))
@@ -242,7 +246,7 @@ class internals:
         print("> topicModel: building corpus")
         corpus = list(self.read_corpus_helper(sample, tokens_only=False))
         print("> topicModel: splitting train/test, test percentage: ", self.test_size)
-        train_corpus, test_corpus = train_test_split(corpus, test_size = self.test_size)
+        train_corpus, test_corpus = train_test_split(corpus, test_size = self.test_size, stratify = y)
         print("> topicModel: corpus ready ")
         print("> topicModel: corpus train size of: ", len(train_corpus), " samples")
         print("> topicModel: corpus test size of: ", len(test_corpus), " samples")
@@ -357,7 +361,7 @@ def train_neural_network():
         indexing+=1
     xmp,smp = a.use_vectorized_vectorizer(p_x)
     data = list(zip(xmp, p_y))
-    train, test = train_test_split(data, test_size = a.test_size)
+    train, test = train_test_split(data, test_size = a.test_size, stratify = y)
     
     train=np.array([np.array(xi) for xi in train])
     test=np.array([np.array(xi) for xi in test])
@@ -373,6 +377,7 @@ def train_neural_network():
 
         
 #@train_neural_network()
+### ORIGINAL FUNCTION ###
 def test_network():
     # a = internals('./trainedmodels/20230217T074231',None)
     a = internals('./trainedmodels/pens_model',None)
@@ -388,11 +393,25 @@ def test_network():
         print(a.tag_list[label])
         print(s)
 
-<<<<<<< Updated upstream
-#train()
-#train_neural_network()
-=======
+### TEST FUNCTION ###
+""" def test_network():
+    # a = internals('./trainedmodels/20230217T074231',None)
+    a = internals('./trainedmodels/pens_model',None)
+    q = load_corpus_from_pkl()
+    network = topicNetwork.network_handler('./trainedmodels/dvlabeler595')
+    print('length of corpus:', len(q))
+    for x in range(0, 10):
+        print(" ".join(q[x][0]))
+        v,s = a.use_vectorizer(" ".join(q[x][0]))
+        vec = v
+        vec=np.array([np.array(vec, dtype=np.float64)], dtype=np.float64)
+        print('vec:', vec)
+        label = network.classify(vec)
+        print('label:', label)
+        print('tag_list[label]:', a.tag_list[label])
+        print('s:', s)  """
+
+
 # train()
 # train_neural_network()
->>>>>>> Stashed changes
 # test_network()
