@@ -19,7 +19,7 @@
 
 # Request a whole 36 processor node with at least 1 TB of RAM
 
-#$ -pe omp 36
+#$ -pe omp 16
 
 # Combine output and error files into a single file
 #$ -j y

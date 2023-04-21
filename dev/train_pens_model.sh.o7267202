@@ -1,0 +1,23 @@
+/projectnb/sparkgrp/ds-naacp-media-bias/venvs/gensim-venv/lib/python3.8/site-packages/spacy/util.py:865: UserWarning: [W095] Model 'en_core_web_trf' (3.5.0) was trained with spaCy v3.5 and may not be 100% compatible with the current version (3.4.0). If you see errors or degraded performance, download a newer compatible model or retrain your custom model with the current spaCy version. For more details and available updates, run: python -m spacy validate
+  warnings.warn(warn_msg)
+> topicModel: internals initializing
+> topicModel: loading spacy dep. tagging model
+> topicModel: loaded spacy dep. tagging model
+Traceback (most recent call last):
+  File "topicModel.py", line 415, in <module>
+    train()
+  File "topicModel.py", line 274, in train
+    a = internals(None,None)
+  File "topicModel.py", line 39, in __init__
+    self.config()
+  File "topicModel.py", line 118, in config
+    self.tag_mappings = json.load(open('tagconfig.json'))
+  File "/share/pkg.7/python3/3.8.10/install/lib/python3.8/json/__init__.py", line 293, in load
+    return loads(fp.read(),
+  File "/share/pkg.7/python3/3.8.10/install/lib/python3.8/json/__init__.py", line 357, in loads
+    return _default_decoder.decode(s)
+  File "/share/pkg.7/python3/3.8.10/install/lib/python3.8/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+  File "/share/pkg.7/python3/3.8.10/install/lib/python3.8/json/decoder.py", line 353, in raw_decode
+    obj, end = self.scan_once(s, idx)
+json.decoder.JSONDecodeError: Expecting ':' delimiter: line 368 column 13 (char 12205)
