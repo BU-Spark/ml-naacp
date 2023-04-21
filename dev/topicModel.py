@@ -187,7 +187,7 @@ class internals:
         d2v_model.build_vocab(train_corpus)
         d2v_model.train(train_corpus, total_examples=d2v_model.corpus_count, epochs=d2v_model.epochs)
         #modelname = str(datetime.datetime.now().strftime("%Y%m%dT%H%M%S"))
-        modelname = 'pens_model'
+        modelname = 'pens_model_stratified'
 
         d2v_model.save('./trainedmodels/'+modelname)
         print("> topicModel: doc2vec model: ", modelname, " finished training")
@@ -338,7 +338,7 @@ def test_vectorizer(path):
 
 def train_neural_network():
     # a = internals('./trainedmodels/20230217T074231',None)
-    a = internals('./trainedmodels/pens_model',None)
+    a = internals('./trainedmodels/pens_model_stratified',None)
     q = load_corpus_from_pkl()
 
     q = np.array(q, dtype=object)
@@ -380,7 +380,7 @@ def train_neural_network():
 ### ORIGINAL FUNCTION ###
 def test_network():
     # a = internals('./trainedmodels/20230217T074231',None)
-    a = internals('./trainedmodels/pens_model',None)
+    a = internals('./trainedmodels/pens_model_stratified',None)
     q = load_corpus_from_pkl()
     network = topicNetwork.network_handler('./trainedmodels/dvlabeler595')
     print(len(q))
@@ -412,6 +412,6 @@ def test_network():
         print('s:', s)  """
 
 
-# train()
-# train_neural_network()
+train()
+train_neural_network()
 # test_network()
