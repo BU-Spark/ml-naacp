@@ -18,7 +18,7 @@ import time
 import matplotlib.pyplot as plt
 
 
-import topicNetwork
+import topicNetwork_2
 
 
 class internals:
@@ -35,7 +35,7 @@ class internals:
         if(nn_path==None):
             pass
         else:
-            self.network = topicNetwork.network_handler(nn_path)
+            self.network = topicNetwork_2.network_handler(nn_path)
         self.config()
         print("> topicModel: internals intialized")
 
@@ -373,7 +373,7 @@ def train_neural_network():
     X_test=np.array([np.array(xi, dtype=np.float64) for xi in test[:,0]])
     Y_test=np.array([np.array(np.array(xi, dtype=np.float64)) for xi in test[:,1]])
 
-    topicNetwork.train_network(X_train,Y_train,X_test,Y_test)
+    topicNetwork_2.train_network(X_train,Y_train,X_test,Y_test)
 
         
 #@train_neural_network()
@@ -382,7 +382,7 @@ def test_network():
     # a = internals('./trainedmodels/20230217T074231',None)
     a = internals('./trainedmodels/pens_model_stratified',None)
     q = load_corpus_from_pkl()
-    network = topicNetwork.network_handler('./trainedmodels/dvlabeler595')
+    network = topicNetwork_2.network_handler('./trainedmodels/dvlabeler595')
     print(len(q))
     for x in range(0, 10):
         print(" ".join(q[x][0]))
