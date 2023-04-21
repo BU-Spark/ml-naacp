@@ -4,6 +4,9 @@
 
 #$ -P sparkgrp
 
+# Request my job to run on Buy-in Compute group hardware my_project has access to
+#$ -l buyin
+
 # Specify hard time limit for the job. 
 #   The job will be aborted if it runs longer than this time.
 #   The default time is 12 hours
