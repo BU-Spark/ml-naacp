@@ -45,7 +45,8 @@ class internals:
         self.doc2vec_model_path = doc2vec_model_path
         self.doc2vecmodel = Doc2Vec.load(self.doc2vec_model_path)
         print("> topicModel: loaded model from path: ", doc2vec_model_path)
-
+    
+    ### ORIGINAL FUNCTION###
     def classify_plaintext(self, article):
         print("> topicModel: nn inference")
         print(article)
@@ -56,6 +57,24 @@ class internals:
         label = self.network.classify(vec)
         print("> topicModel: nn inference complete")
         return(v,s,e,self.tag_list[label])
+
+    ### TEST FUNCTION ###
+    """ def classify_plaintext(self, article):
+        print("> topicModel: nn inference")
+        print(article)
+        v,s = self.use_vectorizer(" ".join(article))
+        e = self.get_entities(article)
+        vec = v
+        vec=np.array([np.array(vec, dtype=np.float64)], dtype=np.float64)
+        label = self.network.classify(vec)
+        ## TEST OPTION 1
+        # tags = []
+        # for v in label[0]:
+           # tags.append(self.tag_list[v])
+        print("> topicModel: nn inference complete")
+        # return (v,s,e,tags)
+        return (v,s,e,self.tag_list[label]) """
+    
     def use_vectorizer(self, article):
         if(self.doc2vecmodel):
             inferred_vector = self.doc2vecmodel.infer_vector(article.split(" "))
@@ -168,7 +187,7 @@ class internals:
         d2v_model.build_vocab(train_corpus)
         d2v_model.train(train_corpus, total_examples=d2v_model.corpus_count, epochs=d2v_model.epochs)
         #modelname = str(datetime.datetime.now().strftime("%Y%m%dT%H%M%S"))
-        modelname = 'pens_model'
+        modelname = 'pens_model_stratified'
 
         d2v_model.save('./trainedmodels/'+modelname)
         print("> topicModel: doc2vec model: ", modelname, " finished training")
@@ -227,7 +246,7 @@ class internals:
         print("> topicModel: building corpus")
         corpus = list(self.read_corpus_helper(sample, tokens_only=False))
         print("> topicModel: splitting train/test, test percentage: ", self.test_size)
-        train_corpus, test_corpus = train_test_split(corpus, test_size = self.test_size)
+        train_corpus, test_corpus = train_test_split(corpus, test_size = self.test_size, stratify = y)
         print("> topicModel: corpus ready ")
         print("> topicModel: corpus train size of: ", len(train_corpus), " samples")
         print("> topicModel: corpus test size of: ", len(test_corpus), " samples")
@@ -271,6 +290,10 @@ def train():
     training_samples = train_sample_one
 
     training_samples = a.correct_tags(training_samples)
+    print (training_samples)
+    print(type(training_samples))
+
+    return
     #print(training_samples.tag.unique())
     #train_sample_two = 
     import pickle
@@ -308,16 +331,14 @@ def load_corpus_from_pkl():
     return(object_file)
     file.close()
 
-
-
 def test_vectorizer(path):
     a = internals(path,None)
     f = input()
     output = a.use_vectorizer(f)
     print(output)
 
-
-def train_neural_network():
+### ORIGINAL FUNCTION ###
+def train_neural_network_original():
     # a = internals('./trainedmodels/20230217T074231',None)
     a = internals('./trainedmodels/pens_model',None)
     q = load_corpus_from_pkl()
@@ -342,6 +363,7 @@ def train_neural_network():
         indexing+=1
     xmp,smp = a.use_vectorized_vectorizer(p_x)
     data = list(zip(xmp, p_y))
+    
     train, test = train_test_split(data, test_size = a.test_size)
     
     train=np.array([np.array(xi) for xi in train])
@@ -354,13 +376,74 @@ def train_neural_network():
     X_test=np.array([np.array(xi, dtype=np.float64) for xi in test[:,0]])
     Y_test=np.array([np.array(np.array(xi, dtype=np.float64)) for xi in test[:,1]])
 
+    print("X_train shape:", X_train.shape)
+    print("X_test shape:", X_test.shape)
+    print("y_train shape:", Y_train.shape)
+    print("y_test shape:", Y_test.shape)
+
+    return
+
     topicNetwork.train_network(X_train,Y_train,X_test,Y_test)
+
+
+### TEST FUNCTION ###
+def train_neural_network_test():
+    # a = internals('./trainedmodels/20230217T074231',None)
+    a = internals('./trainedmodels/pens_model',None)
+    q = load_corpus_from_pkl()
+
+    q = np.array(q, dtype=object)
+    print(q.shape)
+    x = q[:,0]
+    y = q[:,1]
+    p_x = []
+    p_y = []
+    example_count = 0
+    indexing = 0
+    while example_count < 100000 and indexing<len(x):
+        if(y[indexing][0] in a.tag_list and y[indexing][0]!="NEWS"):
+            p_x.append(x[indexing])
+            p_y.append(a.tag_list.index(y[indexing][0]))
+            #print(x[indexing], a.tag_list.index(y[indexing][0]))
+            example_count+=1
+        else:
+            
+            pass
+        indexing+=1
+    xmp,smp = a.use_vectorized_vectorizer(p_x)
+    data = list(zip(xmp, p_y))
+    data = np.array([np.array(val) for val in data])
+
+    X = np.array([np.array(xi, dtype=np.float64) for xi in data[:,0]])
+    y = np.array([np.array(np.array(yi, dtype=np.float64)) for yi in data[:,1]])
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = a.test_size, stratify = y)
+
+    print("X_train shape:", X_train.shape)
+    print("X_test shape:", X_test.shape)
+    print("y_train shape:", Y_train.shape)
+    print("y_test shape:", Y_test.shape)
+
+    return
+    
+    # train=np.array([np.array(xi) for xi in train])
+    # test=np.array([np.array(xi) for xi in test])
+
+    # print(len(a.tag_list))
+    # X_train=np.array([np.array(xi, dtype=np.float64) for xi in train[:,0]])
+    # Y_train=np.array([np.array(np.array(xi, dtype=np.float64)) for xi in train[:,1]])
+
+    # X_test=np.array([np.array(xi, dtype=np.float64) for xi in test[:,0]])
+    # Y_test=np.array([np.array(np.array(xi, dtype=np.float64)) for xi in test[:,1]])
+
+    topicNetwork.train_network(X_train, y_train, X_test, y_test)
 
         
 #@train_neural_network()
+### ORIGINAL FUNCTION ###
 def test_network():
     # a = internals('./trainedmodels/20230217T074231',None)
-    a = internals('./trainedmodels/pens_model',None)
+    a = internals('./trainedmodels/pens_model_stratified',None)
     q = load_corpus_from_pkl()
     network = topicNetwork.network_handler('./trainedmodels/dvlabeler595')
     print(len(q))
@@ -373,6 +456,30 @@ def test_network():
         print(a.tag_list[label])
         print(s)
 
-#train()
-#train_neural_network()
-test_network()
+### TEST FUNCTION ###
+""" def test_network():
+    # a = internals('./trainedmodels/20230217T074231',None)
+    a = internals('./trainedmodels/pens_model',None)
+    q = load_corpus_from_pkl()
+    network = topicNetwork.network_handler('./trainedmodels/dvlabeler595')
+    print('length of corpus:', len(q))
+    for x in range(0, 10):
+        print(" ".join(q[x][0]))
+        v,s = a.use_vectorizer(" ".join(q[x][0]))
+        vec = v
+        vec=np.array([np.array(vec, dtype=np.float64)], dtype=np.float64)
+        print('vec:', vec)
+        label = network.classify(vec)
+        print('label:', label)
+        print('tag_list[label]:', a.tag_list[label])
+        print('s:', s)  """
+
+
+# train()
+print("original")
+train_neural_network_original()
+print()
+print("test")
+train_neural_network_test()
+# test_network()
+# print(type(load_corpus_from_pkl()))

@@ -340,7 +340,7 @@ def test_vectorizer(path):
 ### ORIGINAL FUNCTION ###
 def train_neural_network_original():
     # a = internals('./trainedmodels/20230217T074231',None)
-    a = internals('./trainedmodels/pens_model_stratified',None)
+    a = internals('./trainedmodels/pens_model',None)
     q = load_corpus_from_pkl()
 
     q = np.array(q, dtype=object)
@@ -364,7 +364,7 @@ def train_neural_network_original():
     xmp,smp = a.use_vectorized_vectorizer(p_x)
     data = list(zip(xmp, p_y))
     
-    train, test = train_test_split(data, test_size = a.test_size, stratify = y)
+    train, test = train_test_split(data, test_size = a.test_size)
     
     train=np.array([np.array(xi) for xi in train])
     test=np.array([np.array(xi) for xi in test])
@@ -389,7 +389,7 @@ def train_neural_network_original():
 ### TEST FUNCTION ###
 def train_neural_network_test():
     # a = internals('./trainedmodels/20230217T074231',None)
-    a = internals('./trainedmodels/pens_model_stratified',None)
+    a = internals('./trainedmodels/pens_model',None)
     q = load_corpus_from_pkl()
 
     q = np.array(q, dtype=object)
