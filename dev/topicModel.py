@@ -338,7 +338,7 @@ def test_vectorizer(path):
     print(output)
 
 ### ORIGINAL FUNCTION ###
-def train_neural_network_original():
+""" def train_neural_network_original():
     # a = internals('./trainedmodels/20230217T074231',None)
     a = internals('./trainedmodels/pens_model_stratified',None)
     q = load_corpus_from_pkl()
@@ -364,7 +364,7 @@ def train_neural_network_original():
     xmp,smp = a.use_vectorized_vectorizer(p_x)
     data = list(zip(xmp, p_y))
     
-    train, test = train_test_split(data, test_size = a.test_size, stratify = y)
+    train, test = train_test_split(data, test_size = a.test_size)
     
     train=np.array([np.array(xi) for xi in train])
     test=np.array([np.array(xi) for xi in test])
@@ -381,9 +381,7 @@ def train_neural_network_original():
     print("y_train shape:", Y_train.shape)
     print("y_test shape:", Y_test.shape)
 
-    return
-
-    topicNetwork.train_network(X_train,Y_train,X_test,Y_test)
+    topicNetwork.train_network(X_train,Y_train,X_test,Y_test) """
 
 
 ### TEST FUNCTION ###
@@ -421,10 +419,8 @@ def train_neural_network_test():
 
     print("X_train shape:", X_train.shape)
     print("X_test shape:", X_test.shape)
-    print("y_train shape:", Y_train.shape)
-    print("y_test shape:", Y_test.shape)
-
-    return
+    print("y_train shape:", y_train.shape)
+    print("y_test shape:", y_test.shape)
     
     # train=np.array([np.array(xi) for xi in train])
     # test=np.array([np.array(xi) for xi in test])
