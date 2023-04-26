@@ -290,12 +290,7 @@ def train():
     training_samples = train_sample_one
 
     training_samples = a.correct_tags(training_samples)
-    print (training_samples)
-    print(type(training_samples))
 
-    return
-    #print(training_samples.tag.unique())
-    #train_sample_two = 
     import pickle
     training_corpus,testing_corpus = a.build_corpus(training_samples)
     # file = open('./data/corpus_b', 'wb')

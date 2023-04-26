@@ -1,0 +1,50 @@
+/projectnb/sparkgrp/ds-naacp-media-bias/venvs/gensim-venv/lib/python3.8/site-packages/spacy/util.py:865: UserWarning: [W095] Model 'en_core_web_trf' (3.5.0) was trained with spaCy v3.5 and may not be 100% compatible with the current version (3.4.0). If you see errors or degraded performance, download a newer compatible model or retrain your custom model with the current spaCy version. For more details and available updates, run: python -m spacy validate
+  warnings.warn(warn_msg)
+/projectnb/sparkgrp/ds-naacp-media-bias/venvs/gensim-venv/lib/python3.8/site-packages/spacy/util.py:865: UserWarning: [W095] Model 'en_core_web_trf' (3.5.0) was trained with spaCy v3.5 and may not be 100% compatible with the current version (3.4.0). If you see errors or degraded performance, download a newer compatible model or retrain your custom model with the current spaCy version. For more details and available updates, run: python -m spacy validate
+  warnings.warn(warn_msg)
+> topicModel: internals initializing
+> topicModel: loading spacy dep. tagging model
+> topicModel: loaded spacy dep. tagging model
+> topicModel: internals intialized
+> topicModel: building training sample
+                                                     body         tag
+0       Only FIVE internationals allowed, count em, FI...      SOCCER
+1                                                POLITICS    POLITICS
+2                                               U.S. NEWS   U.S. NEWS
+3                                                POLITICS    POLITICS
+4                                              WORLD NEWS  WORLD NEWS
+...                                                   ...         ...
+113757                                             SOCCER      SOCCER
+113758                                           BASEBALL    BASEBALL
+113759                                         BASKETBALL  BASKETBALL
+113760                                           POLITICS    POLITICS
+113761                                           FOOTBALL    FOOTBALL
+
+[106097 rows x 2 columns]
+<class 'pandas.core.frame.DataFrame'>
+> topicModel: internals initializing
+> topicModel: loading spacy dep. tagging model
+> topicModel: loaded spacy dep. tagging model
+> topicModel: loading model from path:  ./trainedmodels/pens_model_stratified
+Traceback (most recent call last):
+  File "topicModel.py", line 475, in <module>
+    train_neural_network()
+  File "topicModel.py", line 390, in train_neural_network
+    a = internals('./trainedmodels/pens_model_stratified',None)
+  File "topicModel.py", line 34, in __init__
+    self.load_vectorizer(doc2vec_model_path)
+  File "topicModel.py", line 46, in load_vectorizer
+    self.doc2vecmodel = Doc2Vec.load(self.doc2vec_model_path)
+  File "/projectnb/sparkgrp/ds-naacp-media-bias/venvs/gensim-venv/lib/python3.8/site-packages/gensim/models/doc2vec.py", line 809, in load
+    return super(Doc2Vec, cls).load(*args, rethrow=True, **kwargs)
+  File "/projectnb/sparkgrp/ds-naacp-media-bias/venvs/gensim-venv/lib/python3.8/site-packages/gensim/models/word2vec.py", line 1942, in load
+    model = super(Word2Vec, cls).load(*args, **kwargs)
+  File "/projectnb/sparkgrp/ds-naacp-media-bias/venvs/gensim-venv/lib/python3.8/site-packages/gensim/utils.py", line 486, in load
+    obj = unpickle(fname)
+  File "/projectnb/sparkgrp/ds-naacp-media-bias/venvs/gensim-venv/lib/python3.8/site-packages/gensim/utils.py", line 1460, in unpickle
+    with open(fname, 'rb') as f:
+  File "/projectnb/sparkgrp/ds-naacp-media-bias/venvs/gensim-venv/lib/python3.8/site-packages/smart_open/smart_open_lib.py", line 177, in open
+    fobj = _shortcut_open(
+  File "/projectnb/sparkgrp/ds-naacp-media-bias/venvs/gensim-venv/lib/python3.8/site-packages/smart_open/smart_open_lib.py", line 363, in _shortcut_open
+    return _builtin_open(local_path, mode, buffering=buffering, **open_kwargs)
+FileNotFoundError: [Errno 2] No such file or directory: './trainedmodels/pens_model_stratified'
