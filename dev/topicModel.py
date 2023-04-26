@@ -385,9 +385,9 @@ def test_vectorizer(path):
 
 
 ### TEST FUNCTION ###
-def train_neural_network_test():
+def train_neural_network():
     # a = internals('./trainedmodels/20230217T074231',None)
-    a = internals('./trainedmodels/pens_model',None)
+    a = internals('./trainedmodels/pens_model_stratified',None)
     q = load_corpus_from_pkl()
 
     q = np.array(q, dtype=object)
@@ -471,11 +471,7 @@ def test_network():
         print('s:', s)  """
 
 
-# train()
-print("original")
-train_neural_network_original()
-print()
-print("test")
-train_neural_network_test()
-# test_network()
+train()
+train_neural_network()
+test_network()
 # print(type(load_corpus_from_pkl()))
