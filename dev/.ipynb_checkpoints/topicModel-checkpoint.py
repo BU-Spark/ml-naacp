@@ -246,7 +246,7 @@ class internals:
         print("> topicModel: building corpus")
         corpus = list(self.read_corpus_helper(sample, tokens_only=False))
         print("> topicModel: splitting train/test, test percentage: ", self.test_size)
-        train_corpus, test_corpus = train_test_split(corpus, test_size = self.test_size, stratify = y)
+        train_corpus, test_corpus = train_test_split(corpus, test_size = self.test_size)
         print("> topicModel: corpus ready ")
         print("> topicModel: corpus train size of: ", len(train_corpus), " samples")
         print("> topicModel: corpus test size of: ", len(test_corpus), " samples")
