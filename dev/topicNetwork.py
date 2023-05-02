@@ -151,6 +151,3 @@ class network_handler:
         outputs = self.model(torch.from_numpy(X))
         _, predicted = torch.max(outputs.data, 1)
         return(predicted)
-
-
-

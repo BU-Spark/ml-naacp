@@ -8,8 +8,8 @@ class neighborhood_mapping():
     def load_mappings(self):
         # load census tract to boston neighborhood mapping 
         # load census block to boston neighborhood mapping 
-        self.tract_mapping = json.load(open("./entity-recognition/tracts-neighbors.json"))
-        self.block_mapping = json.load(open("./entity-recognition/blocks-neighbors.json"))
+        self.tract_mapping = json.load(open("./entity-recognition/geo-data/tracts-neighbors.json"))
+        self.block_mapping = json.load(open("./entity-recognition/geo-data/blocks-neighbors.json"))
 
     def tract_to_neighborhood(self, tract):
         # given a census tract return the boston neighborhood it is in 

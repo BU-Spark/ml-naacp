@@ -1,5 +1,6 @@
 secret.py
-testing-ner.ipynb 
+testing-ner.ipynb
+combine_rss_articles.ipynb
 
 #ignore the data
 *.csv
