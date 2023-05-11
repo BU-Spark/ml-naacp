@@ -219,7 +219,8 @@ class internals:
         d2v_model.build_vocab(train_corpus)
         print("> topicModel: training, samples = ", str(d2v_model.corpus_count))
         d2v_model.train(train_corpus, total_examples=d2v_model.corpus_count, epochs=d2v_model.epochs)
-        modelname = str(datetime.datetime.now().strftime("%Y%m%dT%H%M%S"))
+        # modelname = str(datetime.datetime.now().strftime("%Y%m%dT%H%M%S"))
+        modelname = 'pens_new'
 
         d2v_model.save('./trainedmodels/'+modelname)
         print("> topicModel: doc2vec model: ", modelname, " finished training")
