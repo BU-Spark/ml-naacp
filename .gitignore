@@ -1,6 +1,10 @@
 secret.py
 testing-ner.ipynb
 combine_rss_articles.ipynb
+document_classification/document-classification.ipynb
+document_classification/bertopic_models
+entity_recognition/saved-geocodes.json
+entity_recognition/not-boston-saved-geocodes.json
 
 #ignore the data
 *.csv
