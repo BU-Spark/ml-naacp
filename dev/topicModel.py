@@ -422,5 +422,5 @@ def train_random_forest():
     print(str(right), " of ", str(total))
 train_random_forest()
 #train_neural_network()
-#test_network()
+test_network()
 #train()

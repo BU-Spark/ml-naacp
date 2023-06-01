@@ -86,15 +86,16 @@ def load_and_run():
             guess_1 = lp1.make(row['content'])
             #print(guess_0)
             #print(guess_1)
-            file = open('./temp/runlog.txt','a')
+            #file = open('./temp/runlog.txt','a')
             items = [row,guess_0,guess_1]
             label_0.append(guess_0['label'].iloc[0])
             label_1.append(guess_1['label'].iloc[0])
             sim_tags_0.append(guess_0['similar_tags'].iloc[0])
             sim_tags_1.append(guess_1['similar_tags'].iloc[0])
-            for item in items:
-	            file.write(str(item)+"\n")
-            file.close()
+            #for item in items:
+	        #    file.write(str(item)+"\n")
+            #file.close()
+
             a.firebase_out([data,guess_0,guess_1])
         data['label_0'] = label_0
         data['similar_tags_0'] = sim_tags_0
@@ -102,4 +103,8 @@ def load_and_run():
         data['similar_tags_1'] = sim_tags_1
         data.to_csv('./temp/runlog.csv')
 
-load_and_run()
+#load_and_run()
+a = pipelining()
+data = a.rss_in()
+
+
