@@ -9,6 +9,8 @@ from gensim.models import Doc2Vec
 from gensim.models.doc2vec import TaggedDocument
 import spacy
 
+from sklearn.ensemble import RandomForestClassifier
+
 import json
 import pandas as pd
 
@@ -36,6 +38,7 @@ class internals:
             pass
         else:
             self.network = topicNetwork.network_handler(nn_path)
+        self.randomforest = None
         self.config()
         print("> topicModel: internals intialized")
 
@@ -45,6 +48,12 @@ class internals:
         self.doc2vec_model_path = doc2vec_model_path
         self.doc2vecmodel = Doc2Vec.load(self.doc2vec_model_path)
         print("> topicModel: loaded model from path: ", doc2vec_model_path)
+    def fit_random_forest(self, X, y):
+        clf = RandomForestClassifier(max_depth=70, random_state=0)
+        self.random_forest = clf.fit(X, y)
+        pass
+    def predict_random_forest(self, x):
+        return self.random_forest.predict([x])
 
     def classify_plaintext(self, article):
         print("> topicModel: nn inference")
@@ -365,6 +374,53 @@ def test_network():
         print(a.tag_list[label])
         print(s)
 
+
+def train_random_forest():
+    a = internals('./trainedmodels/20230217T074231',None)
+    q = load_corpus_from_pkl()
+
+    q = np.array(q, dtype=object)
+    print(q.shape)
+    x = q[:,0]
+    y = q[:,1]
+    p_x = []
+    p_y = []
+    example_count = 0
+    indexing = 0
+    while example_count < 100000 and indexing<len(x):
+        if(y[indexing][0] in a.tag_list and y[indexing][0]!="NEWS"):
+            p_x.append(x[indexing])
+            p_y.append(a.tag_list.index(y[indexing][0]))
+            #print(x[indexing], a.tag_list.index(y[indexing][0]))
+            example_count+=1
+        else:
+            
+            pass
+        indexing+=1
+    xmp,smp = a.use_vectorized_vectorizer(p_x)
+    data = list(zip(xmp, p_y))
+    train, test = train_test_split(data, test_size = a.test_size)
+    
+    train=np.array([np.array(xi) for xi in train])
+    test=np.array([np.array(xi) for xi in test])
+
+    print(len(a.tag_list))
+    X_train=np.array([np.array(xi, dtype=np.float64) for xi in train[:,0]])
+    Y_train=np.array([np.array(np.array(xi, dtype=np.float64)) for xi in train[:,1]])
+
+    X_test=np.array([np.array(xi, dtype=np.float64) for xi in test[:,0]])
+    Y_test=np.array([np.array(np.array(xi, dtype=np.float64)) for xi in test[:,1]])
+
+    a.fit_random_forest(X_train,Y_train)
+    right = 0
+    total = 0
+    for x in range(0, len(X_test)):
+        y = a.predict_random_forest(X_test[x])
+        if(y == Y_test[x]):
+            right+=1
+        total+=1
+    print(str(right), " of ", str(total))
+train_random_forest()
 #train_neural_network()
 test_network()
 #train()
