@@ -11,7 +11,7 @@ from os.path import exists
 
 import hashlib
 import pandas as pd
-
+import time
 
 class rss_acquisition:
     def __init__(self):
@@ -38,6 +38,7 @@ class rss_acquisition:
         except Exception as e:
             print('> Err: The scraping job failed. See exception: ')
             print(e)
+            return("")
 
     #parse scraped RSS feed
     def rss_parse(self):
@@ -88,19 +89,36 @@ class rss_acquisition:
 
 
 
-    #save feed to file
-    def saveFeed(self):
+    #save feed to file - using same file each time 
+    #2-22-2023 I was having issues getting this to work - specifically getting it to open the file and then writing new articles to it
+    def saveFeed2(self):
         try:
             if(self.data!=None):
                 file_exists = exists(self.rss_feed_path)
                 if(file_exists):
-                    df = pd.read_csv (self.rss_feed_path)
+                    df = pd.read_csv(self.rss_feed_path)
                     acquired_df = pd.DataFrame.from_records(self.data)
-                    ans = concat([df, acquired_df]).drop_duplicates(keep='first')
+                    ans = pd.concat([df, acquired_df]).drop_duplicates(keep='first')
                     print("> Saving to pre-existing RSS records: ", self.rss_feed_path)
                     ans.to_csv(self.rss_feed_path, sep='\t', encoding='utf-8')
                 else:
-                    self.pd.DataFrame.from_records(data).to_csv(self.rss_feed_path, sep='\t', encoding='utf-8')
+                    pd.DataFrame.from_records(self.data).to_csv(self.rss_feed_path, sep='\t', encoding='utf-8')
+            else:
+                print("> Err: Requested save without any data")
+        except Exception as e:
+            print('> Err: The save job failed. See exception: ')
+            print(e)
+
+    # save feed to new file each time 
+    def saveFeed(self):
+        try:
+            if(self.data!=None):
+                # create new file path 
+                print("> Saving feed...")
+                new_path = "/Users/mvoong/Desktop/ml-naacp/dev/temp/" + str(time.time()).split(".")[0] + ".csv"
+                df = pd.DataFrame.from_records(self.data)
+                df.to_csv(new_path, encoding='utf-8')
+                print(new_path)
             else:
                 print("> Err: Requested save without any data")
         except Exception as e:
@@ -124,7 +142,7 @@ class rss_acquisition:
 
     #return acquired data as dataframe
     def acquiredToDF(self):
-        if(self.data!=None):
+        if(self.data!=None and self.data!=""):
             return(pd.DataFrame.from_records(self.data))
         else:
             return(None)
