@@ -35,3 +35,4 @@ The `original_pipeline` folder contains a doc2vec model (trained on different ne
 
 1. BERTopic: https://maartengr.github.io/BERTopic/index.html
 2. BERT NER: https://huggingface.co/dslim/bert-large-NER
+3. BART MNLI: https://huggingface.co/facebook/bart-large-mnli
