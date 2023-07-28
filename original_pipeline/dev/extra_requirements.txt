@@ -1,0 +1,2 @@
+pytorch torchvision -c pytorch
+python3 -m spacy download en_core_web_trf

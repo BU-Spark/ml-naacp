@@ -1,0 +1,12 @@
+{
+    "p2_001n": "total population" ,
+    "p2_002n": "total hispanic or latino",
+    "p2_003n": "total not hispanic or latino",
+    "p2_004n": "total not hispanic or latino - pop of one race",
+    "p2_005n": "total not hispanic or latino - pop of one race - white alone",
+    "p2_006n": "total not hispanic or latino - pop of one race - black or african american alone",
+    "p2_007n": "total not hispanic or latino - pop of one race - american indian and alaska native alone",
+    "p2_008n": "total not hispanic or latino - pop of one race - asian alone",
+    "p2_009n": "total not hispanic or latino - pop of one race - native hawaiian and other pacific islander alone",
+    "p2_010n": "total not hispanic or latino - pop of one race - some other race alone"
+}

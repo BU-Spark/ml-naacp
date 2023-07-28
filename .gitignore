@@ -1,9 +1,15 @@
+secret.py
+testing-ner.ipynb
+combine_rss_articles.ipynb
+document_classification/document-classification.ipynb
+document_classification/bertopic_models
+entity_recognition/saved-geocodes.json
+entity_recognition/not-boston-saved-geocodes.json
 
 #ignore the data
 *.csv
 *.xlsx
-*.txt
-
+*.tsv
 # Jetbrains Products
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839

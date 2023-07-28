@@ -1,0 +1,4 @@
+pandas
+dask
+bertopic
+urllib3==1.26.6
