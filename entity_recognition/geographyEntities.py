@@ -5,7 +5,7 @@ class geography():
     def __init__(self):
         self.load_geographies()
         self.load_org_entities()
-        self.saved_geocodes = json.load(open("./entity-recognition/saved-geocodes.json"))
+        self.saved_geocodes = json.load(open("./entity_recognition/saved-geocodes.json"))
     
     def load_geographies(self):
         # static data, states, towns, orgs in entity output format to filter out of geocoding results 
@@ -13,7 +13,7 @@ class geography():
         self.load_mass_town_entities()
     
     def load_state_entities(self):
-        states = pd.read_csv("./entity-recognition/geo-data/states.csv")
+        states = pd.read_csv("./entity_recognition/geo-data/states.csv")
         states_set = set()
         for idx in range(len(states)):
             tup = (states['state'][idx], 'LOC')
@@ -21,7 +21,7 @@ class geography():
         self.state_entities = states_set
     
     def load_mass_town_entities(self):
-        towns = pd.read_csv("./entity-recognition/geo-data/mass-towns.csv")
+        towns = pd.read_csv("./entity_recognition/geo-data/mass-towns.csv")
         towns_set = set()
         for idx in range(len(towns)):
             tup = (towns['town'][idx], 'LOC')
