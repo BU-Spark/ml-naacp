@@ -354,7 +354,7 @@ def main():
     ignore_article_types = ["National News", "International News", "Programs", "Digital Mural", "Jazz", "Celtic"]
     
     # 5699 (1000) 4629 (1000) 2376 (200) 1225 (500 articles)
-    # 19863 (1000) 17460 (1000) 15055 10355 (1000) 7980 (1000)
+    # 24275 19863 (1000) 17460 (1000) 15055 10355 (1000) 7980 (1000)
     for idx in range(10500, 11500): # 12,024 (- 500 articles -) 10,567 (- 500 articles -) 9,176 8,647 7810 7477 7303
         # not running on articles in national or international categories because mentions will most likely be outside of boston
         #if df['category'][idx] != "National" and df['category'][idx] != "International News":
