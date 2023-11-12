@@ -175,5 +175,19 @@ $RECYCLE.BIN/
 # Linux trash folder which might appear on any partition or disk
 .Trash-*
 
+*.json
+*.csv
+
 # .nfs files are created when an open file is removed but is still being accessed
 .nfs*
+gbh_rss/.ipynb_checkpoints/RSS_Feed-checkpoint.ipynb
+se_ml_production/.ipynb_checkpoints/Fast_API_ML_Train-checkpoint.ipynb
+se_ml_production/EDA_On_GBH/.ipynb_checkpoints/non_stochastic_model_output-checkpoint.json
+se_ml_production/EDA_On_GBH/.ipynb_checkpoints/Some_Surface_Leve_EDA-checkpoint.ipynb
+se_ml_production/EDA_On_GBH/non_stochastic_model_output.json
+se_ml_production/entity_recognition/.ipynb_checkpoints/saved-geocodes-checkpoint.json
+se_ml_production/entity_recognition/__pycache__/censusNeighborhood.cpython-310.pyc
+se_ml_production/entity_recognition/__pycache__/geographyEntities.cpython-310.pyc
+se_ml_production/entity_recognition/__pycache__/processing_utils.cpython-310.pyc
+se_ml_production/entity_recognition/__pycache__/secret.cpython-310.pyc
+se_ml_production/entity_recognition/census.json
