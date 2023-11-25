@@ -10,6 +10,8 @@ EXPOSE 8080
 
 COPY ./ML_Service ./app
 
+ENV GOOGLE_APPLICATION_CREDENTIALS=/code/app/keys/naacp-ser-acc.json
+
 ENV PYTHONPATH "${PYTHONPATH}:/code/app"
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]

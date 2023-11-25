@@ -14,11 +14,9 @@ def get_locations_bert(article_text, nlp):
     input: article_text as a string, aggregate of h1, h2, lede, and body
     returns: locations - set of tuples of (NAME, 'LOC') and organizations - set of tuples (NAME, 'ORG) mentioned in the article
     """
-    
     ner_results = nlp(article_text)
     locations = set([(X['word'],X['entity_group']) for X in ner_results if X['entity_group'] == 'LOC'])
     orgs = set([(X['word'], X['entity_group']) for X in ner_results if X['entity_group'] == 'ORG'])
-
     return locations, orgs
 
 def clean_entity_results(extracted_loc, extracted_orgs, drop_geos):
