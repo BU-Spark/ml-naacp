@@ -52,6 +52,8 @@ def package_data_to_dict(
 ### API Endpoints
 @ml_router.post("/upload_csv")
 async def upload_file(file: UploadFile = None, user_id: str = Form(...)):
+	db_manager = global_instance.get_data("db_manager")
+
 	try:
     	# To run the pipeline, two things we need to have defined is the data_schmea and data packing func
 		data_schema = {
@@ -84,13 +86,16 @@ async def upload_file(file: UploadFile = None, user_id: str = Form(...)):
 		global_instance.update_data("db_prod", connect_MongoDB_Prod())
 
 		# We need to upload these states
-		update_job_status(
-			upload_id=global_instance.get_data("upload_id"), 
-			user_id=global_instance.get_data("userID"),
-			timestamp=global_instance.get_data("upload_timestamp"), 
-			article_cnt=-1, 
-			status=global_instance.get_data("upload_status"),
-			message="JOB IS ENQUEUED"
+		db_manager.run_job(
+			update_job_status, 
+			db_manager.act_con[0]['connection'], # Argument 1 (1st connection)
+			global_instance.get_data("upload_id"), 
+			global_instance.get_data("userID"),
+			global_instance.get_data("upload_timestamp"), 
+			-1, 
+			global_instance.get_data("upload_status"),
+			"JOB IS ENQUEUED",
+			connection_obj=db_manager.act_con[0]
 		)
 
 		print(f"[DEBUG] Recieved Columns:", df.columns) # For debug stuff
@@ -101,30 +106,35 @@ async def upload_file(file: UploadFile = None, user_id: str = Form(...)):
 		if (cleaned_df.empty):
 			print("[INFO] Given DF is all duplicates")
 			global_instance.update_data("upload_status", "ALL DUPLICATES")
-			update_job_status(
 
-				upload_id=global_instance.get_data("upload_id"), 
-				user_id=global_instance.get_data("userID"),
-				timestamp=global_instance.get_data("upload_timestamp"),
-				article_cnt=0,
-				status=global_instance.get_data("upload_status"),
-				message="COMPLETE"
+			db_manager.run_job(
+				update_job_status, 
+				db_manager.act_con[0]['connection'], # Argument 1 (1st connection)
+				global_instance.get_data("upload_id"), 
+				global_instance.get_data("userID"),
+				global_instance.get_data("upload_timestamp"), 
+				0, 
+				global_instance.get_data("upload_status"),
+				"ALL DUPLICATES",
+				connection_obj=db_manager.act_con[0]
 			)
+
 			return JSONResponse(content={"filename": file.filename, "status": "All are DUPLICATES. No files processed."}, status_code=200)
 
-		# Connect to the ML database incase it becomes a stale connection
-		global_instance.update_data("db_prod", connect_MongoDB_Prod())
-		global_instance.update_data("upload_status", "PROCESSING")
 
 		# Once validation is good to go, then we update to processing
 		# We need to upload these states
-		update_job_status(
-			upload_id=global_instance.get_data("upload_id"), 
-			user_id=global_instance.get_data("userID"),
-			timestamp=global_instance.get_data("upload_timestamp"), # Hopefully this variable is not mutable, that is the time is the same when recorded 
-			article_cnt=df.shape[0], # Count of rows 
-			status=global_instance.get_data("upload_status"),
-			message="INFERENCE PIPELINE IS PROCESSING."
+		global_instance.update_data("upload_status", "PROCESSING")
+		db_manager.run_job(
+			update_job_status, 
+			db_manager.act_con[0]['connection'], # Argument 1 (1st connection)
+			global_instance.get_data("upload_id"), 
+			global_instance.get_data("userID"),
+			global_instance.get_data("upload_timestamp"), 
+			df.shape[0], 
+			global_instance.get_data("upload_status"),
+			"INFERENCE PIPELINE IS PROCESSING.",
+			connection_obj=db_manager.act_con[0]
 		)
 
 		# Conduct Entity Recognition and return the new df
@@ -135,16 +145,23 @@ async def upload_file(file: UploadFile = None, user_id: str = Form(...)):
 		if (entity_rec_df.empty):
 			print("[INFO] Entity recongition came up with no locations! Aborting...")
 			global_instance.update_data("upload_status", "NO LOCATIONS")
-			update_job_status(
-
-				upload_id=global_instance.get_data("upload_id"), 
-				user_id=global_instance.get_data("userID"),
-				timestamp=global_instance.get_data("upload_timestamp"),
-				article_cnt=0,
-				status=global_instance.get_data("upload_status"),
-				message="COMPLETE"
+			db_manager.run_job(
+				update_job_status, 
+				db_manager.act_con[0]['connection'], # Argument 1 (1st connection)
+				global_instance.get_data("upload_id"), 
+				global_instance.get_data("userID"),
+				global_instance.get_data("upload_timestamp"), 
+				0, 
+				global_instance.get_data("upload_status"),
+				"NO LOCATIONS FOUND.",
+				connection_obj=db_manager.act_con[0]
 			)
-			send_Discarded(discarded_articles) # Send the discarded articles to avoid duplicates
+			db_manager.run_job(
+				send_Discarded,
+				db_manager.act_con[0]['connection'], # Argument 1 (1st connection)
+				discarded_articles,
+				connection_obj=db_manager.act_con[0]
+			)
 			return JSONResponse(content={"filename": file.filename, "status": "All articles yielded NO LOCATIONS. No files processed."}, status_code=200)
 
 		print("[INFO] Processing through Topic Modeling.")
@@ -169,35 +186,55 @@ async def upload_file(file: UploadFile = None, user_id: str = Form(...)):
 		])
 
 		print("[INFO] Sending Inferences to Production DB.")
-		send_to_production(packaged_data_df) # Send the data to MongoDB
-		send_Discarded(discarded_articles) # Send the discarded articles to avoid duplicates
+		db_manager.run_job(
+			send_to_production, # Send the data to MongoDB
+			db_manager.act_con[0]['connection'], # Argument 1 (1st connection)
+			packaged_data_df,
+			connection_obj=db_manager.act_con[0]
+		)
+		db_manager.run_job(
+			send_Discarded, # Send the discarded articles to avoid duplicates
+			db_manager.act_con[0]['connection'], # Argument 1 (1st connection)
+			discarded_articles,
+			connection_obj=db_manager.act_con[0]
+		)
 
 		## Here we mark the job as complete
-		global_instance.update_data("db_prod", connect_MongoDB_Prod())
 		global_instance.update_data("upload_status", "SUCCESS")
 
-		update_job_status(
-			upload_id=global_instance.get_data("upload_id"), 
-			user_id=global_instance.get_data("userID"),
-			timestamp=global_instance.get_data("upload_timestamp"),
-			article_cnt=entity_rec_df.shape[0],
-			status=global_instance.get_data("upload_status"),
-			message="COMPLETE"
+		db_manager.run_job(
+			update_job_status, 
+			db_manager.act_con[0]['connection'], # Argument 1 (1st connection)
+			global_instance.get_data("upload_id"), 
+			global_instance.get_data("userID"),
+			global_instance.get_data("upload_timestamp"), 
+			entity_rec_df.shape[0], 
+			global_instance.get_data("upload_status"),
+			"COMPLETE",
+			connection_obj=db_manager.act_con[0]
 		)
+
+		#db_manager.force_close_connection(unique_id=db_manager.act_con[0]['id']) # Close the connection as pymongo in GCP doesnt close it
+
+		print(db_manager) # Check MongoDB Statuses
 
 		return JSONResponse(content={"filename": file.filename, "status": "file uploaded"}, status_code=200)
 	except Exception as e:
-		global_instance.update_data("db_prod", connect_MongoDB_Prod())
 		global_instance.update_data("upload_status", "FAILED")
 
-		update_job_status(
-			upload_id=global_instance.get_data("upload_id"), 
-			user_id=global_instance.get_data("userID"),
-			timestamp=global_instance.get_data("upload_timestamp"),
-			article_cnt=-1,
-			status=global_instance.get_data("upload_status"),
-			message=f"{e}"
+		db_manager.run_job(
+			update_job_status, 
+			db_manager.act_con[0]['connection'], # Argument 1 (1st connection)
+			global_instance.get_data("upload_id"), 
+			global_instance.get_data("userID"),
+			global_instance.get_data("upload_timestamp"), 
+			-1, 
+			global_instance.get_data("upload_status"),
+			f"{e}",
+			connection_obj=db_manager.act_con[0]
 		)
+		print(db_manager) # Check MongoDB Statuses
+
 		raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}")
 
 @ml_router.post("/upload_RSS")

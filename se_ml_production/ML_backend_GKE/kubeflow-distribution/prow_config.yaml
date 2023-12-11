@@ -1,0 +1,32 @@
+# This file configures the workflows to trigger in our Prow jobs.
+# see kubeflow/testing/py/run_e2e_workflow.py
+workflows:
+  - tekton_run: kubeflow/gcp-blueprints/tests/pipeline-runs/go-tests-run.yaml 
+    name: go-unittests
+
+  # This just tries to deploy Kubeflow; doesn't run any verification. Maybe that's enough?
+  - tekton_run: kubeflow/gcp-blueprints/tests/pipeline-runs/deploy-blueprint-pipeline-run.yaml 
+    name: deploy
+    job_types:
+    - presubmit
+
+  #**************************************************************************
+  # auto-deploy tests
+  #
+  # The tests below run against auto-deploy clusters.
+  # As a result they run as periodic tests.
+  #**************************************************************************
+  - tekton_run: kubeflow/gcp-blueprints/tests/pipeline-runs/gcp-kf-ready.yaml 
+    name: gcp-kf-ready
+    job_types:
+    - periodic
+
+  - tekton_run: kubeflow/gcp-blueprints/tests/pipeline-runs/mnist-nb-pipeline-run.yaml
+    name: mnist-notebook
+    job_types:
+    - periodic
+
+  - tekton_run: kubeflow/gcp-blueprints/tests/pipeline-runs/xgboost-nb-pipeline-run.yaml
+    name: xgboost-notebook
+    job_types:
+    - periodic

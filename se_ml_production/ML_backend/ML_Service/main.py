@@ -1,4 +1,5 @@
 import nltk
+import secret
 from app_instance import app
 from ML_API import ml_router
 from global_state import global_instance
@@ -29,7 +30,8 @@ async def startup_event():
         saved_geocodes,
         nlp_ner,
         nlp_topic,
-        db) = bootstrap_pipeline()
+        db,
+        db_manager) = bootstrap_pipeline()
 
         global_instance.update_data("year", year)
         global_instance.update_data("dsource", dsource)
@@ -42,6 +44,7 @@ async def startup_event():
         global_instance.update_data("saved_geocodes", saved_geocodes)
         global_instance.update_data("nlp_ner", nlp_ner)
         global_instance.update_data("nlp_topic", nlp_topic)
+        global_instance.update_data("db_manager", db_manager)
 
         validate_bootstrap(
             year,
@@ -55,7 +58,8 @@ async def startup_event():
             saved_geocodes,
             nlp_ner,
             nlp_topic,
-            db
+            db,
+            db_manager
         )
 
         nltk.download('punkt')
@@ -63,9 +67,16 @@ async def startup_event():
         # MongoDB Bootstrap
         defined_collection_names = ["uploads", "discarded"]
         db_prod = connect_MongoDB_Prod()
-        global_instance.update_data("db_prod", db_prod)
-        bootstrap_MongoDB_Prod(db_prod, defined_collection_names)
+        db_manager = global_instance.get_data("db_manager")
+        # We then create our first MongoDB connection
+        db_manager.init_connection(uri=secret.MONGO_URI_NAACP)
 
+        db_manager.run_job(
+            bootstrap_MongoDB_Prod, 
+            db_manager.act_con[0]['connection'], # Argument 1 (1st connection)
+            defined_collection_names, # Argument 2
+            connection_obj=db_manager.act_con[0]
+            )
     except Exception as e:
         print(f"[Error!] FATAL ERROR! | {e}")
         raise

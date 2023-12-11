@@ -1,5 +1,10 @@
+# API Sensitive Information
 secret.py
 testing-ner.ipynb
+keys/
+env.sh
+
+# Mill
 combine_rss_articles.ipynb
 document_classification/document-classification.ipynb
 document_classification/bertopic_models
@@ -180,6 +185,11 @@ $RECYCLE.BIN/
 
 # .nfs files are created when an open file is removed but is still being accessed
 .nfs*
+
+# Python Caches
+__pycache__/
+
+# Custom ML_Pipeline stuff
 gbh_rss/.ipynb_checkpoints/RSS_Feed-checkpoint.ipynb
 se_ml_production/.ipynb_checkpoints/Fast_API_ML_Train-checkpoint.ipynb
 se_ml_production/EDA_On_GBH/.ipynb_checkpoints/non_stochastic_model_output-checkpoint.json

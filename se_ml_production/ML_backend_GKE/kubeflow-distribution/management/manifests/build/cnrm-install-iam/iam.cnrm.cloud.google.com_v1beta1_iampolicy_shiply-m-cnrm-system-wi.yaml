@@ -1,0 +1,16 @@
+apiVersion: iam.cnrm.cloud.google.com/v1beta1
+kind: IAMPolicy
+metadata:
+  annotations:
+    gke.io/cluster: bootstrap://
+  name: shiply-m-cnrm-system-wi
+  namespace: special-michelle
+spec:
+  bindings:
+  - members:
+    - serviceAccount:special-michelle.svc.id.goog[cnrm-system/cnrm-controller-manager]
+    role: roles/iam.workloadIdentityUser
+  resourceRef:
+    apiVersion: iam.cnrm.cloud.google.com/v1alpha1
+    kind: IAMServiceAccount
+    name: shiply-m-cnrm-system
