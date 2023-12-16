@@ -11,6 +11,10 @@ def convert_to_datesum(s):
 	month = str(datetime.strptime(month_num, "%b").month)
 	day = date_formatted[6:8]
 
+	if (int(month) <= 9):
+		year = str(year) + "0"
+		return int(year + month + day)
+
 	return int(year + month + day)
 
 def string_to_list(s):
