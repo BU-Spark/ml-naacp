@@ -4,6 +4,8 @@ testing-ner.ipynb
 keys/
 env.sh
 
+models/
+
 # Mill
 combine_rss_articles.ipynb
 document_classification/document-classification.ipynb
