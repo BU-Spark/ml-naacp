@@ -11,6 +11,7 @@ from queue import Queue
 from google.cloud import storage
 from google.cloud import pubsub_v1
 from kubernetes import client, config
+import random
 
 # Create a pod
 def create_pod(job_id):
@@ -66,15 +67,52 @@ v1 = client.CoreV1Api()
 
 # Use a thread-safe queue instead of a list
 message_queue = Queue()
+message_list = {}
+
+# dummy job duration data
+def job_duration():
+    # dummy
+    message_list["649750991193125278676203"] = 0
+    message_list["378850381323449255339358"] = 0
+    
+    for job_id in message_list:
+        message_list[job_id] = random.randint(1, 100)
+    
+    print(message_list)
+
+# monitor logic
+def monitor_pods():
+    while True:
+        pods = v1.list_namespaced_pod(namespace="default").items
+        for pod in pods:
+            # print("pod.metadata.name: ", pod.metadata.name)
+            # print("pod.ip: ", pod.ip)
+            # print("pod.status: ", pod.status.phase)
+            if pod.status.phase == "Succeeded":
+                delete_pod(pod.metadata.name)
+                print(pod.metadata.name, " successfully completed task! ")
+            elif pod.status.phase == "Failed":
+                delete_pod(pod.metadata.name)
+                print(pod.metadata.name, " failed to complete task :( ")
+                create_pod(pod.metadata.name[8:])
+
 
 def job_scheduler():
-    for job_id in message_queue:
+    
+    job_duration()
+
+    # sort dictionary
+    sorted_message_list = sorted(message_list.items(), key=lambda item: item[1], reverse=True)
+    print("sorted message list: ", sorted_message_list)
+
+    for job_id in message_list:
+        print("job_id:", job_id)
         create_pod(job_id)
     
-    # put monitoring logic here
-    time.sleep(10)
+    # monitor pod status
+    monitor_pods()
 
-    for job_id in message_queue:
+    for job_id in message_list:
         pod_name = f"pod-job-{job_id}"
         delete_pod(pod_name)
 
@@ -101,14 +139,15 @@ def process_data():
     while True:
         # Wait until a message is available
         message_data = message_queue.get()
-        print("message_data: ", message_data, "end")
         print(f"[INFO] Processing Data: {message_data}\n")
 
-        name = 123
-        create_pod(name)
-        delete_pod(f"pod-job-{name}")
+        # name = "123"
+        # create_pod(name)
+        # delete_pod(f"pod-job-{name}")
+
         # run job scheduler
-        # job_scheduler()
+        job_scheduler()
+        
 
         # test using postman - containerize the pod ... 
 
@@ -131,6 +170,8 @@ def process_data():
 
 def callback(message):
     message_queue.put(message.data.decode('utf-8'))
+    # pod name cannot have any whitespace.
+    message_list[message.data.decode('utf-8')[20:44]] = 0
     message.ack()  # Acknowledge the message
     print(f"[INFO] Acknowledged Message Content: {message.data.decode('utf-8')}\n")
     return
