@@ -176,7 +176,7 @@ def save_geocodes(new_data, boston=True):
     # one for locations outside of boston
     
     if boston:
-        filename = "./entity-recognition/saved-geocodes.json"
+        filename = "./entity_recognition/saved-geocodes.json"
         with open(filename, 'r+') as f:
             # load existing data 
             file_data = json.load(f)
@@ -187,7 +187,7 @@ def save_geocodes(new_data, boston=True):
             json.dump(file_data, f, indent=4)
     """
     else:
-        filename = "./entity-recognition/not-boston-saved-geocodes.json"
+        filename = "./entity_recognition/not-boston-saved-geocodes.json"
         with open(filename, 'r+') as f:
             # load existing data 
             file_data = json.load(f)
@@ -352,8 +352,10 @@ def main():
     nlp = load_bert()
 
     ignore_article_types = ["National News", "International News", "Programs", "Digital Mural", "Jazz", "Celtic"]
-    # completed up to 2000
-    for idx in range(1500, 2000): #12,024 (- 500 articles -) 10,567 (- 500 articles -) 9,176 8,647 7810 7477 7303
+    
+    # 5699 (1000) 4629 (1000) 2376 (200) 1225 (500 articles)
+    # 24275 19863 (1000) 17460 (1000) 15055 10355 (1000) 7980 (1000)
+    for idx in range(10500, 11500): # 12,024 (- 500 articles -) 10,567 (- 500 articles -) 9,176 8,647 7810 7477 7303
         # not running on articles in national or international categories because mentions will most likely be outside of boston
         #if df['category'][idx] != "National" and df['category'][idx] != "International News":
         if df['Section'][idx] not in ignore_article_types and df['Type'][idx] == 'Article':
@@ -389,26 +391,9 @@ def main():
                     break      
             
             temp = run_pipeline(year, dsource, dname, state, existing_loc_geocode, location_geocode, mappings)
-            
-            """
-            result[df['UID'][idx]] = {"author": "",
-                                      "body": clean_article_text(df['content'][idx]),
-                                      "content_id": df['UID'][idx],
-                                      "hl1": clean_article_text(df['title'][idx]),
-                                      "hl2": clean_article_text(df['description'][idx]),
-                                      "meta": {"copyright": "",
-                                               "issue_number": "", 
-                                               "volume": ""},
-                                      "topic": df['category'][idx],
-                                      "pub_date": df['pubDate'][idx],
-                                      "pub_name": "GBH",
-                                      "link": df['link'][idx],
-                                      "census_tracts": temp,
-                                      "method": method,
-                                      "ent_geocodes": existing_loc_geocode | location_geocode}
-            """
+
             # modified for gbh rss feed dump 
-            with open('gbh-sample-test.json', 'r+') as f:
+            with open('./entity_recognition/gbh-sample-test.json', 'r+') as f:
                 # load existing data 
                 file_data = json.load(f)
                 file_data[df['Tagging'][idx]] = {"author": df['Byline'][idx],

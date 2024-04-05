@@ -1,0 +1,38 @@
+# Google Cloud distribution of Kubeflow
+
+The official documentation is available [here](https://googlecloudplatform.github.io/kubeflow-gke-docs/).
+
+To deploy a full-fledged Kubeflow on Google Cloud Kubernetes cluster, follow steps below. 
+
+Kubeflow is deployed as follows
+
+* Deploy mangement cluster using the manifests in **management**.
+  * The management cluster runs KCC and optionally ConfigSync
+  * The management cluster is used to create all Google Cloud resources for Kubeflow (e.g. the GKE cluster)
+  * A single management cluster could be used for multiple projects or multiple KF deployments
+
+* Deploy Kubeflow cluster using the manifests in **kubeflow**.
+  * kubeflow contains kustomization rule for each component.
+  * Component manifests is pulled from upstream `kubeflow/manifests` repository to individual folder's `upstream/` directory.
+  * `Makefile` uses kustomize and kubectl to generate and apply resources.
+
+
+For more information about packages refer to the [kpt packages guide](https://googlecontainertools.github.io/kpt/guides/producer/packages/)
+
+## Getting Started
+
+1. Use the [management](./management/README.md) blueprint to spin up a management
+   cluster
+1. Use the [kubeflow](./kubeflow/README.md) blueprint to create a Kubeflow deployment.
+
+## Development
+
+## Sample material
+
+To get a sense of how each Kubeflow components are used together for ML workflow, try a basic example [kubeflow-e2e-mnist.ipynb](https://github.com/kubeflow/pipelines/blob/master/samples/contrib/kubeflow-e2e-mnist/kubeflow-e2e-mnist.ipynb) using Notebook in Kubeflow. It will make use of Notebook, Volume, Pipelines, AutoML, KServe components.
+
+### Test Grid
+
+* [Master Periodic](https://k8s-testgrid.appspot.com/sig-big-data#kubeflow-gcp-blueprints-master&group-by-hierarchy-pattern=%5B%5Cw-%5D%2B)
+* [Master Presubmit](https://k8s-testgrid.appspot.com/sig-big-data#kubeflow-gcp-blueprints-presubmit&group-by-hierarchy-pattern=%5B%5Cw-%5D%2B)
+* [Master Postsubmit](https://k8s-testgrid.appspot.com/sig-big-data#kubeflow-gcp-blueprints-postsubmit&group-by-hierarchy-pattern=%5B%5Cw-%5D%2B)

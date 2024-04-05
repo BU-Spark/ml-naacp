@@ -1,0 +1,52 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kf-admin-iap
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - services
+  - configmaps
+  - secrets
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+- apiGroups:
+  - extensions
+  - networking.k8s.io
+  - apps
+  resources:
+  - ingresses
+  - deployments
+  verbs:
+  - get
+  - list
+  - update
+  - patch
+- apiGroups:
+  - authentication.istio.io
+  - security.istio.io
+  resources:
+  - policies
+  - requestauthentications
+  verbs:
+  - '*'
+- apiGroups:
+  - networking.istio.io
+  resources:
+  - gateways
+  - virtualservices
+  verbs:
+  - '*'
+- apiGroups:
+  - cloud.google.com
+  resources:
+  - backendconfigs
+  verbs:
+  - get
+  - list
+  - patch
+  - update

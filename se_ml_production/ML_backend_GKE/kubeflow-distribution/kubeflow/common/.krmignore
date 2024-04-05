@@ -1,0 +1,10 @@
+asm
+cert-manager/upstream/cert-manager/base/patches/crd-preserve-unknown-fields.yaml
+cert-manager/cert-manager/overlays/letsencrypt/params.yaml
+cloud-endpoints/base/params.yaml
+iap-ingress/base/params.yaml
+istio/upstream/profile-overlay.yaml
+istio/upstream/profile.yaml
+user-namespace/upstream/base/params.yaml
+knative/upstream/knative-eventing-post-install-jobs/base/eventing-post-install-jobs.yaml
+iap-ingress/base/swagger_template.yaml
