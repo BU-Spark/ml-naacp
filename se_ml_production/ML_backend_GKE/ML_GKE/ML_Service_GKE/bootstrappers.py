@@ -1,7 +1,6 @@
 import os
 import json
 import zipfile
-import secret
 from art import *
 from bson import ObjectId
 from pymongo import MongoClient
@@ -235,7 +234,7 @@ def bootstrap_MongoDB_Prod(client, defined_collection_names):
         if (client == None):
             raise Exception("No database was given!")
 
-        db_prod = client[secret.db_name]
+        db_prod = client[os.environ['db_name']]
             
         # Here we check for the upload collection and make it if it doesn't exist
         collection_list = db_prod.list_collection_names()

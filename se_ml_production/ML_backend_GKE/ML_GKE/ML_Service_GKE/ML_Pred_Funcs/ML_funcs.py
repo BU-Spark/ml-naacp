@@ -1,7 +1,8 @@
 import pandas as pd
 from tqdm import tqdm
+import os
 
-import secret
+
 from global_state import global_instance
 from processingUtils import get_sentences, get_snippet, check_snippets, run_entity_recognition, run_pipeline
 
@@ -70,7 +71,7 @@ def process_data(chunk, df, data_schema, data_packaging_scheme, nlp_ner):
                     ]
             
                     for (entities, method) in check_order:
-                        check_text, location_geocode, existing_loc_geocode = check_snippets(secret.API_KEY, entities[1], entities[0])
+                        check_text, location_geocode, existing_loc_geocode = check_snippets(os.environ['API_KEY'], entities[1], entities[0])
                         if not check_text:
                             discarded_articles.append(df['Tagging'][idx])
                             break 

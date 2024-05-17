@@ -8,7 +8,6 @@ from google.cloud import storage
 from google.cloud import pubsub_v1
 
 import nltk
-import secret
 from ML_Entry import run_pipeline
 from global_state import global_instance
 from Mongo_Utils.mongo_funcs import connect_MongoDB_Prod
@@ -73,7 +72,7 @@ def startup_event():
         db_prod = connect_MongoDB_Prod()
         db_manager = global_instance.get_data("db_manager")
         # We then create our first MongoDB connection
-        db_manager.init_connection(uri=secret.MONGO_URI_NAACP)
+        db_manager.init_connection(uri=os.environ['MONGO_URI_NAACP'])
 
         db_manager.run_job(
             bootstrap_MongoDB_Prod, 

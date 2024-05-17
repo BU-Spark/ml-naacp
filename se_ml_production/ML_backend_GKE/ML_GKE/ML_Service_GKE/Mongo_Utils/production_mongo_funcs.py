@@ -1,7 +1,7 @@
-import secret
 from datetime import datetime
 from global_state import global_instance
 from Mongo_Utils.mongo_funcs import connect_MongoDB_Prod
+import os
 
 def convert_to_datesum(s):
 	date_formatted = s.replace('-', '').replace(' ', '').replace(':', '')
@@ -34,7 +34,7 @@ def addExistingTracts(tract_collection):
 def send_Discarded(client, discard_list):
 	try:
 		# Pack and send all articles
-		db_prod = client[secret.db_name]
+		db_prod = client[os.environ['db_name']]
 		
 		discarded_collection_name = "discarded"
 		discarded_collection = db_prod[discarded_collection_name]
@@ -62,7 +62,7 @@ def send_Discarded(client, discard_list):
 # ==== Packing Funcs ====
 def send_to_production(client, df):
 	try:
-		db_prod = client[secret.db_name]
+		db_prod = client[os.environ['db_name']]
 
 		# Pack and send all articles
 		pack_articles(db_prod, df)
@@ -84,22 +84,24 @@ def pack_articles(db_prod, df):
 		collection_list = db_prod.list_collection_names()
 
 		if articles_collection_name not in collection_list:
-		    db_prod.create_collection(articles_collection_name)
-		    print(f"[INFO] Collection '{articles_collection_name}' created.")
+			db_prod.create_collection(articles_collection_name)
+			print(f"[INFO] Collection '{articles_collection_name}' created.")
 
 		article_df = df.set_index('id')
 		article_dict = article_df.T.to_dict('dict')
 
 		for article_key in article_dict.keys():
-		    article = article_dict[article_key]
-		    if ('openai_labels' not in article):
-		        article["openai_labels"] = []
-		    else:
-		        article["openai_labels"] = string_to_list(article["openai_labels"])
-		    article["dateSum"] = convert_to_datesum(article["pub_date"])
-		    article_payload.append(article)
+			article = article_dict[article_key]
+			if ('openai_labels' not in article):
+				article["openai_labels"] = []
+			else:
+				article["openai_labels"] = string_to_list(article["openai_labels"])
+			article["dateSum"] = convert_to_datesum(article["pub_date"])
+			article_payload.append(article)
 
 		articles_collection.insert_many(article_payload)
+
+
 		print("[INFO] Articles Successfully inserted!")
 		return
 	except Exception as err:

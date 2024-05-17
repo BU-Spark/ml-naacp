@@ -1,4 +1,4 @@
-import secret
+import os
 import pandas as pd
 from io import StringIO  # Import StringIO
 from fastapi import UploadFile # For typing
@@ -26,7 +26,7 @@ def is_duplicate_discarded(tag, discarded_collection):
 	return discarded_collection.count_documents(queryDiscarded) > 0
 
 def run_validation(client, df):
-	db_prod = client[secret.db_name]
+	db_prod = client[os.environ['db_name']]
 	collection_list = db_prod.list_collection_names()
 
 	if ('articles_data' in collection_list):

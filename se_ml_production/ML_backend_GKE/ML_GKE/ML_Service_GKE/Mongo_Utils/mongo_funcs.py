@@ -1,9 +1,9 @@
-import secret
+import os
 from pymongo import MongoClient
 
 def connect_MongoDB_Prod():
     try:
-        client = MongoClient(secret.MONGO_URI_NAACP)
+        client = MongoClient(os.environ['MONGO_URI_NAACP'])
         db = client['se_naacp_db']
         return db
     except Exception as err:
@@ -12,7 +12,7 @@ def connect_MongoDB_Prod():
 
 def update_job_status(client, upload_id, user_id, timestamp, article_cnt, status, message):
     try:
-        db = client[secret.db_name]
+        db = client[os.environ['db_name']]
         
         upload_collection = db["uploads"]
         if (upload_collection.find_one({'uploadID': upload_id})):
