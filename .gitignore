@@ -3,6 +3,7 @@ secret.py
 testing-ner.ipynb
 keys/
 env.sh
+.env
 
 # Mill
 combine_rss_articles.ipynb
