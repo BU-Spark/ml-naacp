@@ -11,7 +11,6 @@ jobs:
     env:
       db_name: ${{ secrets.DB_NAME }}
       MONGO_URI_NAACP: ${{ secrets.MONGO_URI_NAACP }}
-      GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
 
     steps:
       - name: Checkout code
@@ -26,6 +25,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r ./se_ml_production/ML_backend_GKE/ML_GKE/ML_Service_GKE/requirements.txt
+
+      - name: Load Google Service File
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+        run: |
+          echo $GOOGLE_APPLICATION_CREDENTIALS > ./se_ml_production/ML_backend_GKE/ML_GKE/ML_Service_GKE/credentials.json
 
       - name: Run deployment
         run: |
