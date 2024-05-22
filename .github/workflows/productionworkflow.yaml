@@ -30,7 +30,7 @@ jobs:
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
         run: |
-          echo $GOOGLE_APPLICATION_CREDENTIALS > ./se_ml_production/ML_backend_GKE/ML_GKE/ML_Service_GKE/credentials.json
+          echo $GOOGLE_APPLICATION_CREDENTIALS > ./se_ml_production/ML_backend_GKE/ML_GKE/ML_Service_GKE/naacp-ser-acc.json
 
       - name: Run deployment
         run: |
