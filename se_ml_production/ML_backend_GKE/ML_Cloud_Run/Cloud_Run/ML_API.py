@@ -21,6 +21,7 @@ import json
 from typing import Callable
 from concurrent import futures
 from google.cloud import pubsub_v1
+import hashlib
 
 ml_router = APIRouter()
 
@@ -48,6 +49,10 @@ def upload_df_to_gcs(gcp_db, bucket_name, destination_blob_name, df):
 		blob.upload_from_string(csv_buffer.getvalue(), content_type='text/csv')
 	except Exception as e: 
 		raise Exception (f"Error in uploading to GCP: {e}")
+	return
+
+def create_content_ids(df):
+	df['content_id'] = df['Body'].apply(lambda x: hashlib.sha256(x.encode()).hexdigest())
 	return
 
 ### API Endpoints
@@ -100,6 +105,8 @@ async def upload_file(file: UploadFile = None, user_id: str = Form(...)):
 			)
 
 			return JSONResponse(content={"filename": file.filename, "status": "All are DUPLICATES. No files processed."}, status_code=200)
+		
+		create_content_ids(cleaned_df)
 
 		# If there are no duplicates, we convert the pd -> csv then we upload to google storage bucket
 		upload_df_to_gcs(gcp_db, "shiply_csv_bucket", str(
