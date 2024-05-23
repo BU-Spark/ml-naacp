@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import shutil
 import inspect
@@ -51,8 +52,16 @@ def upload_df_to_gcs(gcp_db, bucket_name, destination_blob_name, df):
 		raise Exception (f"Error in uploading to GCP: {e}")
 	return
 
+def clean_string(str):
+    return re.sub(r'[^a-zA-Z0-9]', '', str).lower()
+
+def generate_content_id(row):
+	combined_str = str(row['body']) + str(row['author']) + str(row['hl1']) + str(row['datesume'])
+	cleaned_combined_str = clean_string(combined_str)
+	return hashlib.sha256(cleaned_combined_str.encode()).hexdigest()
+
 def create_content_ids(df):
-	df['content_id'] = df['Body'].apply(lambda x: hashlib.sha256(x.encode()).hexdigest())
+	df['content_id'] = df.apply(lambda row: generate_content_id(row), axis=1)
 	return
 
 ### API Endpoints
