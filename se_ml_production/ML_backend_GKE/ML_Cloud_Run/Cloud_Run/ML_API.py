@@ -94,8 +94,12 @@ async def upload_file(file: UploadFile = None, user_id: str = Form(...)):
 
 		print(f"[DEBUG] Recieved Columns:", df.columns) # For debug stuff
 		print("[INFO] Checking for duplicates!")
+		create_content_ids(df)
 		cleaned_df = validate_csv(df) 
 		print(f"[DEBUG] Cleaned DF\n{cleaned_df}") # For debug stuff
+
+		
+
 
 		if (cleaned_df.empty):
 			print("[INFO] Given DF is all duplicates")
@@ -115,8 +119,6 @@ async def upload_file(file: UploadFile = None, user_id: str = Form(...)):
 
 			return JSONResponse(content={"filename": file.filename, "status": "All are DUPLICATES. No files processed."}, status_code=200)
 		
-		create_content_ids(cleaned_df)
-
 		# If there are no duplicates, we convert the pd -> csv then we upload to google storage bucket
 		upload_df_to_gcs(gcp_db, "shiply_csv_bucket", str(
 			"data/" + global_instance.get_data("upload_id") + "-" + global_instance.get_data("userID") + ".csv"

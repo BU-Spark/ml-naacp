@@ -21,8 +21,8 @@ def run_validation(client, df):
 
 	if ('articles_data' in collection_list):
 		articles_collection = db_prod['articles_data']
-		df['is_duplicate'] = df['Tagging'].apply(lambda tag: is_duplicate_article(tag, articles_collection))
-		print(df[df['is_duplicate'] == False]['Tagging'])
+		df['is_duplicate'] = df['content_id'].apply(lambda tag: is_duplicate_article(tag, articles_collection))
+		print(df[df['is_duplicate'] == False]['content_id'])
 		df = df.drop(df[df['is_duplicate']].index).drop(columns='is_duplicate')
 
 		if (df.empty):
