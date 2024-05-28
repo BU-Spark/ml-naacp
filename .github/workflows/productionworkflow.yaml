@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v2
@@ -26,11 +26,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r ./se_ml_production/ML_backend_GKE/ML_GKE/ML_Service_GKE/requirements.txt
 
-      - name: Load Google Service File
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
-        run: |
-          echo $GOOGLE_APPLICATION_CREDENTIALS > ./se_ml_production/ML_backend_GKE/ML_GKE/ML_Service_GKE/naacp-ser-acc.json
+      - name: Google Auth
+        id: auth
+        uses: google-github-actions/auth@v0
+        with:
+          credentials_json: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
 
       - name: Run deployment
         run: |
