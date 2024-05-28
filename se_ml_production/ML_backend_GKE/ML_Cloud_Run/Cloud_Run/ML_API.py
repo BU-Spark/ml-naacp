@@ -56,7 +56,7 @@ def clean_string(str):
     return re.sub(r'[^a-zA-Z0-9]', '', str).lower()
 
 def generate_content_id(row):
-	combined_str = str(row['body']) + str(row['author']) + str(row['hl1']) + str(row['datesume'])
+	combined_str = str(row['author']) + str(row['hl1']) + str(row['dateSum'])
 	cleaned_combined_str = clean_string(combined_str)
 	return hashlib.sha256(cleaned_combined_str.encode()).hexdigest()
 
