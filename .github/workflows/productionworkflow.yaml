@@ -36,3 +36,10 @@ jobs:
         id: deployment
         run: |
           python ./se_ml_production/ML_backend_GKE/ML_GKE/ML_Service_GKE/main.py
+          exit_status=$?
+          if [ $exit_status -eq 0 ]; then
+            echo "Script executed successfully."
+          else
+            echo "Script failed with exit code $exit_status."
+            exit $exit_status
+          fi
