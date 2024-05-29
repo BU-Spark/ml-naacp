@@ -36,7 +36,3 @@ jobs:
         id: deployment
         run: |
           python ./se_ml_production/ML_backend_GKE/ML_GKE/ML_Service_GKE/main.py
-
-      - name: Check deployment status
-        if: ${{ steps.deployment.outcome == 'success' }}
-        run: exit 0
