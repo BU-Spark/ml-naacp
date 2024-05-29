@@ -36,7 +36,7 @@ async def startup_event():
         print(f"[Error!] FATAL ERROR! | {e}")
         raise
 
-    print(f"Deployment Test Comlpete with no erors\n")
+   
 
 if __name__ == "__main__":
     import uvicorn
