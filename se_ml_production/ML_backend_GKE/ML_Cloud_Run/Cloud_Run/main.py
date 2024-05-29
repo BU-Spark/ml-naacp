@@ -36,10 +36,12 @@ async def startup_event():
         print(f"[Error!] FATAL ERROR! | {e}")
         raise
 
+    print(f"Deployment Test Comlpete with no erors\n")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000) # This bootstraps the FastAPI 
-    print(f"Deployment Test Comlpete with no erors\n")
+    
 
 
 
