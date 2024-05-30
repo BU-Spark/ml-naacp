@@ -137,7 +137,7 @@ def callback(message):
 def main():
     try:
         startup_event() # Bootstrap the entire container
-
+        print("Deployment Test Comlpete with no erors")
         # Then we start the subscription
         subscription_id = "shiply_upload_csv-sub"
         project_id = "special-michelle"
