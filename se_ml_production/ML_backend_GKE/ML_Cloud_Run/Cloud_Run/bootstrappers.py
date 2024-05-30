@@ -86,9 +86,6 @@ def bootstrap_MongoDB_Prod(client, defined_collection_names):
                 db_prod.create_collection(collection)
                 print(f"[INFO] Collection '{collection}' created.")
         spinner.stop()
-		spinner = Spinner("Deployment Test Comlpete with no erors\n")
-		spinner.start()
-		spinner.stop()
     except Exception as err:
         spinner.err()
         print(f"[Error!] Error in Bootstrapping MongoDB Prod DB\nError: {err}")
