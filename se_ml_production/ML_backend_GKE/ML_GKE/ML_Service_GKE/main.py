@@ -80,6 +80,7 @@ def startup_event():
             defined_collection_names, # Argument 2
             connection_obj=db_manager.act_con[0]
             )
+        print("Deployment Test Complete with no errors")
     except Exception as e:
         print(f"[Error!] FATAL ERROR! | {e}")
         raise
@@ -137,7 +138,7 @@ def callback(message):
 def main():
     try:
         startup_event() # Bootstrap the entire container
-        print("Deployment Test Comlpete with no erors")
+
         # Then we start the subscription
         subscription_id = "shiply_upload_csv-sub"
         project_id = "special-michelle"
