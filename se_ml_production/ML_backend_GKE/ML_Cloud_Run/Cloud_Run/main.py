@@ -3,7 +3,7 @@ from app_instance import app
 from ML_API import ml_router
 from global_state import global_instance
 from bootstrappers import bootstrap_pipeline, validate_bootstrap, bootstrap_MongoDB_Prod
-
+import sys
 
 app.include_router(ml_router)
 
@@ -36,7 +36,8 @@ async def startup_event():
         print(f"[Error!] FATAL ERROR! | {e}")
         raise
 
-   
+    sys.stdout.write("Deployment Test Comlpete with no erors\n")
+
 
 if __name__ == "__main__":
     import uvicorn
