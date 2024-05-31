@@ -67,7 +67,6 @@ def startup_event():
 
         nltk.download('punkt')
 
-        print("Deployment Test Complete with no errors")
 
         # MongoDB Bootstrap
         defined_collection_names = ["uploads", "discarded"]
