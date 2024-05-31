@@ -35,26 +35,18 @@ jobs:
       - name: Run deployment
         id: deployment
         run: |
-          python ./se_ml_production/ML_backend_GKE/ML_GKE/ML_Service_GKE/main.py
+          python ./se_ml_production/ML_backend_GKE/ML_GKE/ML_Service_GKE/main.py | tee output.log
+          if grep -q "Deployment Test Complete with no errors" output.log; then
+            echo "Deployment Test Complete with no errors"
+            exit 0
+          else
+            echo "Deployment Test Complete with errors"
+            exit 1
+          fi
           
-          # Get the PID of the background process
-          APP_PID=$!
 
-          # Monitor the deployment log for the success message
-          while true; do
-            if grep -q "Deployment Test Complete with no errors" ./deployment.log; then
-              echo "Deployment Test Complete with no errors"
-              kill $APP_PID
-              exit 0
-            fi
-            sleep 1
-          done
 
-          # If the loop exits, it means the deployment failed
-          echo "Deployment Test Failed"
-          kill $APP_PID
-          exit 1
-
+          
 
 
          
