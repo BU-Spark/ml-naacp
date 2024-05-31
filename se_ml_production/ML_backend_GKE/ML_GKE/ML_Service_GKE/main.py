@@ -67,6 +67,8 @@ def startup_event():
 
         nltk.download('punkt')
 
+        print("Deployment Test Complete with no err")
+
         # MongoDB Bootstrap
         defined_collection_names = ["uploads", "discarded"]
         db_prod = connect_MongoDB_Prod()
@@ -80,7 +82,6 @@ def startup_event():
             defined_collection_names, # Argument 2
             connection_obj=db_manager.act_con[0]
             )
-        print("Deployment Test Complete with no errors")
     except Exception as e:
         print(f"[Error!] FATAL ERROR! | {e}")
         raise
