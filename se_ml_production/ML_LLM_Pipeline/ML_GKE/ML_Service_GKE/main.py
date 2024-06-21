@@ -25,6 +25,8 @@ def startup_event():
         (all_topics_embedding, 
          selected_topics_embedding, 
          client_taxonomy_df, 
+         all_topics_list,
+         selected_topics_list,
          openAIClient,
          googleMapsClient, 
          nlp_llm, 
@@ -36,6 +38,8 @@ def startup_event():
             all_topics_embedding, 
             selected_topics_embedding, 
             client_taxonomy_df, 
+            all_topics_list,
+            selected_topics_list,
             openAIClient,
             googleMapsClient, 
             nlp_llm,
@@ -47,6 +51,8 @@ def startup_event():
         global_instance.update_data("all_topics_embedding", all_topics_embedding)
         global_instance.update_data("selected_topics_embedding", selected_topics_embedding)
         global_instance.update_data("client_taxonomy_df", client_taxonomy_df)
+        global_instance.update_data("all_topics_list", all_topics_list)
+        global_instance.update_data("selected_topics_list", selected_topics_list)
         global_instance.update_data("openAIClient", openAIClient)
         global_instance.update_data("googleMapsClient", googleMapsClient)
         global_instance.update_data("nlp_llm", nlp_llm)

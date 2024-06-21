@@ -39,70 +39,68 @@ def load_taxonomy_lists(openAIClient):
 	Loads the Taxonomy List based on heirarchies
 	"""
 	# Get embedding for ALL topics selected by BERTopic
-	# taxonomy_df = pd.read_csv('./data_prod/Content_Taxonomy.csv', skiprows=5, usecols=range(8))
-	# taxonomy_df.columns = taxonomy_df.iloc[0]
-	# taxonomy_df = taxonomy_df.tail(-1)
+	taxonomy_df = pd.read_csv('./data_prod/Content_Taxonomy.csv', skiprows=5, usecols=range(8))
+	taxonomy_df.columns = taxonomy_df.iloc[0]
+	taxonomy_df = taxonomy_df.tail(-1)
 
-	# tier_1_list = []
-	# tier_2_list = []
-	# tier_3_list = []
-	# tier_4_list = []
-	# for index, row in taxonomy_df.iterrows():
-	# 	if not pd.isnull(row['Tier 4']) and row['Tier 4'] != ' ':
-	# 		tier_1_label = row['Tier 1']
-	# 		tier_2_label = row['Tier 2']
-	# 		tier_3_label = row['Tier 3']
-	# 		tier_4_label = row['Tier 4']
-	# 		tier_4_list.append(f'{tier_1_label} - {tier_2_label} - {tier_3_label} - {tier_4_label}')
-	# 	elif not pd.isnull(row['Tier 3']) and row['Tier 3'] != ' ':
-	# 		tier_1_label = row['Tier 1']
-	# 		tier_2_label = row['Tier 2']
-	# 		tier_3_label = row['Tier 3']
-	# 		tier_3_list.append(f'{tier_1_label} - {tier_2_label} - {tier_3_label}')
-	# 	elif not pd.isnull(row['Tier 2']) and row['Tier 2'] != ' ':
-	# 		tier_1_label = row['Tier 1']
-	# 		tier_2_label = row['Tier 2']
-	# 		tier_2_list.append(f'{tier_1_label} - {tier_2_label}')
-	# 	else:
-	# 		tier_1_label = row['Tier 1']
-	# 		tier_1_list.append(f'{tier_1_label}')
+	tier_1_list = []
+	tier_2_list = []
+	tier_3_list = []
+	tier_4_list = []
+	for index, row in taxonomy_df.iterrows():
+		if not pd.isnull(row['Tier 4']) and row['Tier 4'] != ' ':
+			tier_1_label = row['Tier 1']
+			tier_2_label = row['Tier 2']
+			tier_3_label = row['Tier 3']
+			tier_4_label = row['Tier 4']
+			tier_4_list.append(f'{tier_1_label} - {tier_2_label} - {tier_3_label} - {tier_4_label}')
+		elif not pd.isnull(row['Tier 3']) and row['Tier 3'] != ' ':
+			tier_1_label = row['Tier 1']
+			tier_2_label = row['Tier 2']
+			tier_3_label = row['Tier 3']
+			tier_3_list.append(f'{tier_1_label} - {tier_2_label} - {tier_3_label}')
+		elif not pd.isnull(row['Tier 2']) and row['Tier 2'] != ' ':
+			tier_1_label = row['Tier 1']
+			tier_2_label = row['Tier 2']
+			tier_2_list.append(f'{tier_1_label} - {tier_2_label}')
+		else:
+			tier_1_label = row['Tier 1']
+			tier_1_list.append(f'{tier_1_label}')
 
-	# tier_1_list = list(set(tier_1_list))
-	# tier_2_list = list(set(tier_2_list))
-	# tier_3_list = list(set(tier_3_list))
-	# tier_4_list = list(set(tier_4_list))
+	tier_1_list = list(set(tier_1_list))
+	tier_2_list = list(set(tier_2_list))
+	tier_3_list = list(set(tier_3_list))
+	tier_4_list = list(set(tier_4_list))
 
-	# tier_1_embedding = [openAIClient.get_embedding(topic) for topic in tier_1_list]
-	# tier_2_embedding = [openAIClient.get_embedding(topic) for topic in tier_2_list]
-	# tier_3_embedding = [openAIClient.get_embedding(topic) for topic in tier_3_list]
-	# tier_4_embedding = [openAIClient.get_embedding(topic) for topic in tier_4_list]
+	tier_1_embedding = [openAIClient.get_embedding(topic) for topic in tier_1_list]
+	tier_2_embedding = [openAIClient.get_embedding(topic) for topic in tier_2_list]
+	tier_3_embedding = [openAIClient.get_embedding(topic) for topic in tier_3_list]
+	tier_4_embedding = [openAIClient.get_embedding(topic) for topic in tier_4_list]
 
-	# all_topics_list = []
-	# [all_topics_list.append(topic) for topic in tier_1_list]
-	# [all_topics_list.append(topic) for topic in tier_2_list]
-	# [all_topics_list.append(topic) for topic in tier_3_list]
-	# [all_topics_list.append(topic) for topic in tier_4_list]
+	all_topics_list = []
+	[all_topics_list.append(topic) for topic in tier_1_list]
+	[all_topics_list.append(topic) for topic in tier_2_list]
+	[all_topics_list.append(topic) for topic in tier_3_list]
+	[all_topics_list.append(topic) for topic in tier_4_list]
 
-	all_topics_embedding = ["Test"] # For Testing Purposes
-	# [all_topics_embedding.append(embedding) for embedding in tier_1_embedding]
-	# [all_topics_embedding.append(embedding) for embedding in tier_2_embedding]
-	# [all_topics_embedding.append(embedding) for embedding in tier_3_embedding]
-	# [all_topics_embedding.append(embedding) for embedding in tier_4_embedding]
+	all_topics_embedding = []
+	[all_topics_embedding.append(embedding) for embedding in tier_1_embedding]
+	[all_topics_embedding.append(embedding) for embedding in tier_2_embedding]
+	[all_topics_embedding.append(embedding) for embedding in tier_3_embedding]
+	[all_topics_embedding.append(embedding) for embedding in tier_4_embedding]
 
 	# Get embedding for the 230 topics selected by BERTopic 
-	# selected_taxonomy_df = pd.read_csv('./data_prod/embedding_similarity_label.csv')
-	# selected_taxonomy_df = selected_taxonomy_df.dropna(subset=['closest_topic'])
-	# selected_topics_list = selected_taxonomy_df['closest_topic'].values.tolist()
+	selected_taxonomy_df = pd.read_csv('./data_prod/embedding_similarity_label.csv')
+	selected_taxonomy_df = selected_taxonomy_df.dropna(subset=['closest_topic'])
+	selected_topics_list = selected_taxonomy_df['closest_topic'].values.tolist()
 
-	# selected_topics_embedding = [openAIClient.get_embedding(topic) for topic in selected_topics_list]
-
-	selected_topics_embedding = ["Test"] # For Testing Purposes
+	selected_topics_embedding = [openAIClient.get_embedding(topic) for topic in selected_topics_list]
 
 	# Alternative taxonomy: client's list of topics
 	client_taxonomy_df = pd.read_excel('./data_prod/Asad_Topics_List.xlsx', names=['label'])
 	client_taxonomy_df['ada_embedding'] = client_taxonomy_df['label'].map(openAIClient.get_embedding)
 
-	return all_topics_embedding, selected_topics_embedding, client_taxonomy_df
+	return all_topics_embedding, selected_topics_embedding, client_taxonomy_df, all_topics_list, selected_topics_list
 
 def fetch_and_load_taxonomy_lists(db, openAIClient, fetch=True):
 	"""
@@ -119,9 +117,11 @@ def fetch_and_load_taxonomy_lists(db, openAIClient, fetch=True):
 			blob_2.download_to_filename("./data_prod/Content_Taxonomy.csv")
 			blob_3 = bucket.blob("Topic_Modeling_Pipeline_Data/embedding_similarity_label.csv")
 			blob_3.download_to_filename("./data_prod/embedding_similarity_label.csv")
-			all_topics_embedding, selected_topics_embedding, client_taxonomy_df = load_taxonomy_lists(openAIClient)
+			blob_4 = bucket.blob("Entity_Recognition_Pipeline_Data/known_locs.json") # Here is for Explicit mention pass
+			blob_4.download_to_filename("./data_prod/known_locs.json")
+			all_topics_embedding, selected_topics_embedding, client_taxonomy_df, all_topics_list, selected_topics_list = load_taxonomy_lists(openAIClient)
 
-			return all_topics_embedding, selected_topics_embedding, client_taxonomy_df
+			return all_topics_embedding, selected_topics_embedding, client_taxonomy_df, all_topics_list, selected_topics_list
 	except Exception as err:
 		print(f"Error fetching and loading the taxonomy data!\nError: {err}")
 		raise Exception("Fatal Error in fetching taxonomy data!")
@@ -219,7 +219,7 @@ def bootstrap_pipeline():
 
 		spinner = Spinner("Fetching Taxonomy Mappings using OpenAI Embedding Model (This might take a while)...")
 		spinner.start()
-		all_topics_embedding, selected_topics_embedding, client_taxonomy_df = fetch_and_load_taxonomy_lists(db, openAIClient, fetch=any(dependency_resolver_arr))
+		all_topics_embedding, selected_topics_embedding, client_taxonomy_df, all_topics_list, selected_topics_list = fetch_and_load_taxonomy_lists(db, openAIClient, fetch=True) #fetch=any(dependency_resolver_arr)
 		spinner.stop()
 		print()
         
@@ -230,7 +230,7 @@ def bootstrap_pipeline():
 		spinner.stop()
         
 		print("\nBootstrap complete!\n")
-		return all_topics_embedding, selected_topics_embedding, client_taxonomy_df, openAIClient, googleMapsClient, nlp_llm, nlp_ner, db, db_manager
+		return all_topics_embedding, selected_topics_embedding, client_taxonomy_df, all_topics_list, selected_topics_list, openAIClient, googleMapsClient, nlp_llm, nlp_ner, db, db_manager
 	except Exception as e:
 		spinner.err()
 		print(f"Bootstrap Failed!!!\nFatal Error:{e}")
@@ -238,7 +238,7 @@ def bootstrap_pipeline():
         
 	return
 
-def validate_bootstrap(all_topics_embedding, selected_topics_embedding, client_taxonomy_df, openAIClient, googleMapsClient, nlp_llm, nlp_ner, db, db_manager):
+def validate_bootstrap(all_topics_embedding, selected_topics_embedding, client_taxonomy_df, all_topics_list, selected_topics_list, openAIClient, googleMapsClient, nlp_llm, nlp_ner, db, db_manager):
 	"""
 	Validates the bootstrap variables, checking if they exist.
 	"""
@@ -250,6 +250,8 @@ def validate_bootstrap(all_topics_embedding, selected_topics_embedding, client_t
 			"all_topics_embedding": all_topics_embedding, 
 			"selected_topics_embedding": selected_topics_embedding, 
 			"client_taxonomy_df": client_taxonomy_df,
+			"all_topics_list": all_topics_list,
+			"selected_topics_list": selected_topics_list,
 			"openAIClient": openAIClient,
 			"googleMapsClient": googleMapsClient,
 			"nlp_llm": nlp_llm,

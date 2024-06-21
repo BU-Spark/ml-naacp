@@ -15,26 +15,14 @@ def is_duplicate_article(tag, articles_collection):
 	}
 	return articles_collection.find_one(queryArticles) is not None
 
-def is_duplicate_discarded(tag, discarded_collection):
-	queryDiscarded = {
-		'$and': [
-			{'userID': global_instance.get_data("userID")},
-			{'content_ids': {'$in': [tag]}}
-		]
-	}
-	return discarded_collection.count_documents(queryDiscarded) > 0
-
 def run_validation(client, df):
 	db_prod = client[secret.db_name]
 	collection_list = db_prod.list_collection_names()
 
 	if ('articles_data' in collection_list):
 		articles_collection = db_prod['articles_data']
-		discarded_collection = db_prod['discarded']
-		df['is_duplicate'] = df['Tagging'].apply(lambda tag: is_duplicate_article(tag, articles_collection))
-		print(df[df['is_duplicate'] == False]['Tagging'])
-		df['is_duplicate'] = df['Tagging'].apply(lambda tag: is_duplicate_discarded(tag, discarded_collection))
-		print(df[df['is_duplicate'] == False]['Tagging'])
+		df['is_duplicate'] = df['content_id'].apply(lambda tag: is_duplicate_article(tag, articles_collection))
+		print(df[df['is_duplicate'] == False]['content_id'])
 		df = df.drop(df[df['is_duplicate']].index).drop(columns='is_duplicate')
 
 		if (df.empty):
@@ -66,9 +54,11 @@ async def read_csv(file: UploadFile) -> pd.DataFrame:
 def validate_csv(df: pd.DataFrame) -> bool:
 	db_manager = global_instance.get_data("db_manager")
 	
-	data_col_schema = ['Type', 'Label','Headline','Byline','Section','Tagging','Paths','Publish Date','Body']
+	data_col_schema = ['Headline','Publisher','Byline','Paths','Publish Date','Body', 'content_id']
+
 	try:
 		current_df_col = list(df.columns)
+		print(current_df_col)
 		if (not Counter(current_df_col) == Counter(data_col_schema)):
 			raise Exception(f"CSV Columns do not match the required data schema!")
 

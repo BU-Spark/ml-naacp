@@ -15,60 +15,11 @@ from ML_Pred_Funcs.ML_funcs import geolocate_articles, topic_modeling
 from Mongo_Utils.production_mongo_funcs import send_to_production, send_Discarded
 from Mongo_Utils.mongo_funcs import update_job_status, connect_MongoDB_Prod
 
-
-# Data packing scheme, function attributes must be len(data_schema) + 1
-# Ideally, the developer should provide a function to figure out how to pack the data based on their needs
-def package_data_to_dict(
-	data_schema, 
-	id,
-	neighborhoods,
-	position_section,
-	tracts,
-	author,
-	body,
-	content_id,
-	hl1,
-	hl2,
-	pub_date,
-	pub_name,
-	link,
-	method,
-	ent_geocodes
-):
-	try:
-		args, _, _, values = inspect.getargvalues(inspect.currentframe())
-		args.pop(0) # we pop off data_schema
-		for arg in args:
-			data_schema[arg].append(values[arg])
-	except KeyError as ke:
-		print("Key not found in data schema!")
-		print(f"Raw Error: {ke}")
-
-	return data_schema
-
 # ====== Here we run our pipeline ====== 
 def run_pipeline(df, upload_id: str, user_id: str, upload_timestamp: str):
 	db_manager = global_instance.get_data("db_manager")
 
 	try:
-    	# To run the pipeline, two things we need to have defined is the data_schmea and data packing func
-		data_schema = {
-			"id": [],
-			"neighborhoods": [],
-			"position_section": [],
-			"tracts": [],
-			"author": [],
-			"body": [],
-			"content_id": [],
-			"hl1": [],
-			"hl2": [],
-			"pub_date": [],
-			"pub_name": [],
-			"link": [],
-			"method": [],
-			"ent_geocodes": []
-		}
-
 		# Here we need to generate an Upload ID & have the user ID ready
 		# Assuming this runs sequentially, these variables shouldn't be changed until the prediction is finished!
 		global_instance.update_data("upload_id", upload_id) # Should only run once!
@@ -108,8 +59,6 @@ def run_pipeline(df, upload_id: str, user_id: str, upload_timestamp: str):
 				connection_obj=db_manager.act_con[0]
 			)
 			return
-		
-		return # For Testing Purposes
 
 		print("[INFO] Processing through Topic Modeling.")
 		final_df = topic_modeling(processing_df)
@@ -118,20 +67,53 @@ def run_pipeline(df, upload_id: str, user_id: str, upload_timestamp: str):
 		final_df["userID"] = global_instance.get_data("userID")
 		final_df["uploadID"] = global_instance.get_data("upload_id")
 
+		final_df = final_df.drop(columns=[
+			"content_id",
+			"Body",
+			"Headline"
+		])
+		final_df = pd.concat([final_df, df], axis=1)
+
 		print("[DEBUG] Final DF.")
 		print(final_df)
 
-		print("FINAL DF ARTICLE COUNT:", final_df)
+		# Obtain coordinates
+		final_df["Coordinates"] = final_df["Explicit_Pass_1"].combine_first(final_df["NER_Pass_1_Coordinates"]).combine_first(final_df["NER_Sorted_Coordinates"])
 
-		# Ideally, we should send final_df to a data warehouse here
-		# final_df ---> Data Warehouse
-
-		# Prune the uneeded columns for production
 		packaged_data_df = final_df.drop(columns=[
-		    'method',
-		    'ent_geocodes',
-		    'bertopic_topic_label'
+		    'llama_prediction',
+		    'Explicit_Pass_1',
+		    'NER_Pass_1',
+			'NER_Pass_1_Sorted',
+			'NER_Pass_1_Coordinates',
+			'NER_prediction',
+			'NER_Sorted',
+			'NER_Sorted_Coordinates',
+			'topic_model_body',
+			'tokens',
+			'ada_embedding',
+			'closest_topic_all',
+			'closest_topic_selected',
 		])
+
+		"""
+		Index(['content_id', 'Headline', 'Body', 'Tracts', 'closest_topic_client',
+       'userID', 'uploadID', 'Byline', 'Body', 'Headline', 'Publish Date',
+       'Publisher', 'Paths', 'content_id'],
+		"""
+
+		packaged_data_df = packaged_data_df.rename(columns={
+			"Byline": "author",
+			"Body": "body",
+			"Headline": "hl1",
+			"Publish Date": "pub_date",
+			"Publisher": "pub_name",
+			"Paths": "link",
+			"Tracts": "tracts",
+			"closest_topic_client": "openai_labels",
+		})
+		print(packaged_data_df["tracts"])
+		print(packaged_data_df.columns)
 
 		print("[INFO] Sending Inferences to Production DB.")
 		db_manager.run_job(

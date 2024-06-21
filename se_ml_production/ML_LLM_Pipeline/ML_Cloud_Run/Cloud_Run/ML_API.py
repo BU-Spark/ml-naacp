@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import shutil
 import inspect
@@ -21,6 +22,7 @@ import json
 from typing import Callable
 from concurrent import futures
 from google.cloud import pubsub_v1
+import hashlib
 
 ml_router = APIRouter()
 
@@ -48,6 +50,18 @@ def upload_df_to_gcs(gcp_db, bucket_name, destination_blob_name, df):
 		blob.upload_from_string(csv_buffer.getvalue(), content_type='text/csv')
 	except Exception as e: 
 		raise Exception (f"Error in uploading to GCP: {e}")
+	return
+
+def clean_string(str):
+    return re.sub(r'[^a-zA-Z0-9]', '', str).lower()
+
+def generate_content_id(row):
+	combined_str = str(row['Byline']) + str(row['Headline']) + str(row['Publish Date'])
+	cleaned_combined_str = clean_string(combined_str)
+	return hashlib.sha256(cleaned_combined_str.encode()).hexdigest()
+
+def create_content_ids(df):
+	df['content_id'] = df.apply(lambda row: generate_content_id(row), axis=1)
 	return
 
 ### API Endpoints
@@ -80,6 +94,7 @@ async def upload_file(file: UploadFile = None, user_id: str = Form(...)):
 
 		print(f"[DEBUG] Recieved Columns:", df.columns) # For debug stuff
 		print("[INFO] Checking for duplicates!")
+		create_content_ids(df)
 		cleaned_df = validate_csv(df) 
 		print(f"[DEBUG] Cleaned DF\n{cleaned_df}") # For debug stuff
 
@@ -100,7 +115,7 @@ async def upload_file(file: UploadFile = None, user_id: str = Form(...)):
 			)
 
 			return JSONResponse(content={"filename": file.filename, "status": "All are DUPLICATES. No files processed."}, status_code=200)
-
+		
 		# If there are no duplicates, we convert the pd -> csv then we upload to google storage bucket
 		upload_df_to_gcs(gcp_db, "shiply_csv_bucket", str(
 			"data/" + global_instance.get_data("upload_id") + "-" + global_instance.get_data("userID") + ".csv"

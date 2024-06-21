@@ -26,35 +26,7 @@ def addExistingTracts(tract_collection):
 		tracts_list.append(global_instance.get_data("census_base").old_census_tracts['tracts_filter'][tract_key])
 
 	tract_collection.insert_many(tracts_list)
-
-def send_Discarded(client, discard_list):
-	try:
-		# Pack and send all articles
-		db_prod = client[secret.db_name]
-		
-		discarded_collection_name = "discarded"
-		discarded_collection = db_prod[discarded_collection_name]
-
-		for discarded_article in discard_list:
-			if (discarded_collection.find_one({'uploadID': global_instance.get_data("upload_id")})):
-				discarded_collection.find_one_and_update(
-					{'uploadID': global_instance.get_data("upload_id")},
-					{'$addToSet': {'content_ids': discarded_article}},
-				)
-			else:
-				new_discard = {
-					'userID': global_instance.get_data("userID"),
-					'uploadID': global_instance.get_data("upload_id"),
-					'content_ids': [discarded_article]
-				}
-				discarded_collection.insert_one(new_discard)
-		print("[INFO] Discarded List Successfully inserted!")
-		return
-	except Exception as err:
-		print(f"[Error!] Error in sending data to MongoDB Prod DB\nError: {err}")
-		raise Exception("Fatal Error in sending to production")
-	return
-
+	
 # ==== Packing Funcs ====
 def send_to_production(client, df):
 	try:

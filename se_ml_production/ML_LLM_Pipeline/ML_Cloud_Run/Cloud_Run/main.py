@@ -20,7 +20,7 @@ async def startup_event():
         global_instance.update_data("gcp_db", gcp_db)
 
         # MongoDB Bootstrap
-        defined_collection_names = ["uploads", "discarded"]
+        defined_collection_names = ["uploads"]
         db_manager = global_instance.get_data("db_manager")
         # We then create our first MongoDB connection
         db_manager.init_connection(uri=secret.MONGO_URI_NAACP)

@@ -16,7 +16,7 @@ def explicit_filtering(header):
 predict_NER = lambda x: [(entity, entity.label_) for entity in global_instance.get_data("nlp_ner")(x).ents] if (x != None and x != "") else None
 def predict_NER_def(x):
     """
-    Run NER on a body of text.
+    Run NER on a Body of text.
     """
     try:
         return predict_NER(x)
@@ -26,17 +26,17 @@ def predict_NER_def(x):
     
 def explicit_filtering_NER(col, truncate=True):
     """
-    Wrapper for NER on for the first pass of NER on body. If 'truncate' is true, then we get the first 500 words.
+    Wrapper for NER on for the first pass of NER on Body. If 'truncate' is true, then we get the first 500 words.
     """
     try:
         if (col['Explicit_Pass_1'] != None): # We already found an explicit mention in the title
-            print(f"Passed on {col['hl1']}")
+            print(f"Passed on {col['Headline']}")
             return None
         else:
             if (truncate):
-                return predict_NER_def(" ".join(col['body'].split(" ")[:500]))  
+                return predict_NER_def(" ".join(col['Body'].split(" ")[:500]))  
             else:
-                return predict_NER_def(col['body'])
+                return predict_NER_def(col['Body'])
     except Exception as e:
         print(e)
         return None
@@ -85,14 +85,14 @@ def getLongLatsForFAC(x):
 
 def predict_llama(col):
     """
-    Runs the input through an LLM prompt on a body of text.
+    Runs the input through an LLM prompt on a Body of text.
     """
     try:
         if (col['Explicit_Pass_1'] != None or col['NER_Pass_1_Coordinates'] != None): # We already found an explicit mention in the previous passes
-            print(f"Passed on {col['hl1']}")
+            print(f"Passed on {col['Headline']}")
             return None
         else:
-            return global_instance.get_data("nlp_llm").invoke({"headline": col['hl1'], "body": col['body']})
+            return global_instance.get_data("nlp_llm").invoke({"headline": col['Headline'], "Body": col['Body']})
     except Exception as e:
         print(e)
         return None

@@ -9,28 +9,95 @@ tqdm.pandas()
 from global_state import global_instance
 from Model_Utils.model_Utils import explicit_filtering, explicit_filtering_NER, filter_loc_explicit, getLongLatsForFAC, predict_llama, predict_NER_def, format_NER, filter_loc, getLongLats, getTractList
 
+import os
+import tiktoken
+import numpy as np
+from transformers import pipeline
+from sklearn.metrics import adjusted_rand_score
+from openai import OpenAI, AsyncOpenAI
+from sklearn.metrics.pairwise import cosine_similarity
+from tenacity import retry, wait_random_exponential, stop_after_attempt
+
 
 # ====== TOPIC MODELING PIPELINE ======
-def topic_modeling(df):
-    unseen_articles = df
-    try:
-        openai_labels = global_instance.get_data("heir_data")
-        unseen_articles = unseen_articles.dropna(subset=['content_id'])
-        topics, probs = global_instance.get_data("nlp_topic").transform(unseen_articles['body']) # get bertopics for each article
-        unseen_articles['bertopic_topic_label'] = topics
+def truncate(tokens, length=500):
+    """
+    Function to get the first 500 elements from a list
+    """
+    return tokens[:length]
 
-        # add open ai label to bglobe dataframe in new column
-        unseen_label_name = [openai_labels[unseen_articles['bertopic_topic_label'][i]]['openai'] 
-                      if int(unseen_articles['bertopic_topic_label'][i]) != -1 else "" for i in range(len(unseen_articles))]
-        unseen_articles['openai_labels'] = unseen_label_name
-        return unseen_articles
+def topic_modeling(df):
+    """
+    Processes dataframe and passes it to output topic labels. Does Topic Modeling task on articles.
+    
+    Parameters
+    ----
+    df: The pandas dataframe that topic modeling is being done on.
+
+    Returns
+    ---- 
+    Returns a Dataframe of Topic Modeling articles
+    """
+    try:
+        df['topic_model_body'] = df['Body'].progress_apply(lambda x: re.sub(re.compile('<.*?>'), '', x))
+        df['tokens'] = df['topic_model_body'].progress_apply(lambda x: x.split())
+        df['tokens'] = df['tokens'].progress_apply(truncate)
+        df['ada_embedding'] = df.tokens.apply(lambda x: global_instance.get_data('openAIClient').get_embedding(','.join(map(str,x)), model='text-embedding-3-small'))
+
+        # Find most similar taxonomy (out of all toipcs) to news body
+        closest_topic_list_all = []
+        for index, row in df.iterrows():
+            target_embedding = row['ada_embedding']
+            similarities = [cosine_similarity(np.array(target_embedding).reshape(1, -1), np.array(topic).reshape(1, -1))[0][0] for topic in global_instance.get_data("all_topics_embedding")]
+
+            # Find the index of the topic with the highest similarity
+            closest_topic_index = np.argmax(similarities)
+
+            # Retrieve the closest topic embedding
+            closest_topic = global_instance.get_data("all_topics_list")[closest_topic_index]
+            closest_topic_list_all.append(closest_topic)
+        df['closest_topic_all'] = closest_topic_list_all
+
+        closest_topic_list_selected = []
+        for index, row in df.iterrows():
+            target_embedding = row['ada_embedding']
+            similarities = [cosine_similarity(np.array(target_embedding).reshape(1, -1), np.array(topic).reshape(1, -1))[0][0] for topic in global_instance.get_data("selected_topics_embedding")]
+
+            # Find the index of the topic with the highest similarity
+            closest_topic_index = np.argmax(similarities)
+
+            # Retrieve the closest topic embedding
+            closest_topic = global_instance.get_data("selected_topics_list")[closest_topic_index]
+            closest_topic_list_selected.append(closest_topic)
+
+        df['closest_topic_selected'] = closest_topic_list_selected
+
+        client_topic_embedding_list = global_instance.get_data("client_taxonomy_df")['ada_embedding'].to_list()
+        client_topic_list = global_instance.get_data("client_taxonomy_df")['label'].to_list()
+        similarity_arr = []
+
+        closest_topic_list_client = []
+        for index, row in df.iterrows():
+            target_embedding = row['ada_embedding']
+            similarities = [cosine_similarity(np.array(target_embedding).reshape(1, -1), np.array(topic).reshape(1, -1))[0][0] for topic in client_topic_embedding_list]
+            
+            if max(similarities) > 0.25:    
+                closest_topic_index = np.argmax(similarities) # Find the index of the topic with the highest similarity
+                closest_topic = client_topic_list[closest_topic_index] # Retrieve the closest topic embedding
+                closest_topic_list_client.append(closest_topic)
+            else:
+                closest_topic_list_client.append('Other')
+            similarity_arr.append(max(similarities))
+            
+        df['closest_topic_client'] = closest_topic_list_client
+    
+        return df
     except Exception as e: # Loop inbounded error
         print(f"[Error] topic_modeling() ran into an error! \n[Raw Error]: {e}")
         raise
-    return unseen_articles
 
 def explicit_filtering(header):
-    known_locs_path = "./geodata/known_locs.json"
+    known_locs_path = "./data_prod/known_locs.json"
     with open(known_locs_path, 'r') as file:
         known_locs_dict = json.load(file)
         
@@ -43,35 +110,35 @@ def explicit_filtering(header):
 # ====== GEOLOCATION PIPELINE ======
 def geolocate_articles(df):
     """
-    Processes a chunk of indices from the given dataset. Does Entity Recongition/Geolocation on articles.
+    Processes the dataaframe given by func. Does Entity Recongition/Geolocation on articles.
     
     Parameters
     ----
-    df: The pandas dataframe that gelocation is being done on.
+    df: The pandas dataframe that geolocation is being done on.
 
     Returns
     ---- 
     Returns a Dataframe of geolocated articles
     """
     try: 
-        df = pd.concat([df['content_id'], df['hl1'], df['body']], axis=1) # We just need the ID, Header, and Body to run the pipeline
+        df = pd.concat([df['content_id'], df['Headline'], df['Body']], axis=1) # We just need the ID, Header, and Body to run the pipeline
         df["llama_prediction"] = None # Add the llama_prediction
 
         # Remove duplicates based on Headers
-        duplicates = df.duplicated(subset=['hl1']) 
+        duplicates = df.duplicated(subset=['Headline']) 
         print(f"[INFO] Duplicates in DF:\n {duplicates.value_counts()}")
-        df = df.drop_duplicates(subset=['hl1'])
+        df = df.drop_duplicates(subset=['Headline'])
 
-        # Clean the HTML in the body and header -> Regex Cleaner 
+        # Clean the HTML in the Body and header -> Regex Cleaner 
         func_clean_html = lambda x: BeautifulSoup(x, "html.parser").get_text() # HTML Cleaner
-        df['body'] = df['body'].progress_apply(func_clean_html)
-        df['hl1'] = df['hl1'].progress_apply(func_clean_html)
+        df['Body'] = df['Body'].progress_apply(func_clean_html)
+        df['Headline'] = df['Headline'].progress_apply(func_clean_html)
         func_clean_regex = lambda x: ' '.join([item for item in re.findall(r'[A-Za-z0-9!@#$%^&*().]+', x) if len(item) > 1]) # Regex Cleaner
-        df['body'] = df['body'].progress_apply(func_clean_regex)
-        df['hl1'] = df['hl1'].progress_apply(func_clean_regex)
+        df['Body'] = df['Body'].progress_apply(func_clean_regex)
+        df['Headline'] = df['Headline'].progress_apply(func_clean_regex)
 
         ### Explicit Mention Layer ###
-        df["Explicit_Pass_1"] = df["hl1"].progress_apply(explicit_filtering)
+        df["Explicit_Pass_1"] = df["Headline"].progress_apply(explicit_filtering)
 
         ### NER Pass 1 ### 
         # * This may take the longest, perhaps Truncate the output?
