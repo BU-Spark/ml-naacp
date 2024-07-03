@@ -214,3 +214,5 @@ embed_topic_model/dxyu_pure_embedding_topic_modeling.ipynb
 embed_topic_model/.ipynb_checkpoints/dxyu_pure_embedding_topic_modeling-checkpoint.ipynb
 embed_topic_model/.ipynb_checkpoints/dxyu_pure_embedding_topic_modeling-checkpoint.ipynb
 embed_topic_model/dxyu_pure_embedding_topic_modeling.ipynb
+
+.env
