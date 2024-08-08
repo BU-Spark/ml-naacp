@@ -5,7 +5,7 @@ from tqdm import tqdm
 tqdm.pandas()
 
 from global_state import global_instance
-from Model_Utils.model_Utils import explicit_filtering, process_NER, predict_llama, extractLocations, getCoordinates, geocode
+from Model_Utils.model_Utils import explicit_filtering, process_NER, predict_llama, extractAllLocations, getAllCoordinates, getAllGeocodes
 from Model_Utils.helper_functions import clean_df
 
 import numpy as np
@@ -112,20 +112,20 @@ def geolocate_articles(df):
         df["Explicit_Pass"] = df["Headline"].progress_apply(explicit_filtering)
 
         ### NER Direct Pass ### 
-        # * This may take the longest, perhaps Truncate the output?
+        # * This may take the longest, perhaps Truncate the input?
         df["NER_Pass"] = df.progress_apply(process_NER, axis=1) # Automatically Truncates and performs NER on first 500 words
                 
         ### Llama + NER Inference Pass ###
         df['LLM_Pass'] = df.progress_apply(predict_llama, axis=1)
        
         # Extract Locations from Passes
-        df['Locations'] = df.progress_apply(extractLocations, axis=1)
+        df['Locations'] = df.progress_apply(extractAllLocations, axis=1)
 
         # Get the Coordinates for the Locations
-        df['Coordinates'] = df['Locations'].progress_apply(getCoordinates)
+        df['Coordinates'] = df['Locations'].progress_apply(getAllCoordinates)
 
         # Geocode the Coordinates (Get the Tract and County)
-        df[['Tracts', 'Counties']] = df.progress_apply(lambda row: pd.Series(geocode(row['Locations'], row['Coordinates'])), axis=1)
+        df[['Tracts', 'Counties']] = df.progress_apply(lambda row: pd.Series(getAllGeocodes(row['Locations'], row['Coordinates'])), axis=1)
 
         # Drop the rows that are missing information
         print("[DEBUG] Data Frame ", df)
