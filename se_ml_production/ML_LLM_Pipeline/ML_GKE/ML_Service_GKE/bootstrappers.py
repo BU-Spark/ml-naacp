@@ -137,6 +137,7 @@ def bootstrap_pipeline():
 			"Asad_Topics_List.xlsx", # Topic Modeling
 			"Content_Taxonomy.csv", # Topic Modeling
 			"embedding_similarity_label.csv", # Topic Modeling
+			"neighborhoods.json" # Mapping of Tracts to Neighborhoods
 		]
 		dependency_resolver_arr = []
         

@@ -193,7 +193,7 @@ def get_unique_locations(locations):
 # Get all locations from the article
 def extractAllLocations(article):
     locations_list = []
-    for key in ['Explicit_Pass', 'NER_Pass', 'LLM_2_Pass', 'LLM_3_1_Pass']:
+    for key in ['Explicit_Pass', 'NER_Pass', 'LLM_Pass']:
         location = article.get(key)
         if location is not None:
             locations_list.extend(location)
