@@ -5,7 +5,7 @@ from tqdm import tqdm
 tqdm.pandas()
 
 from global_state import global_instance
-from Model_Utils.model_Utils import explicit_filtering, process_NER, predict_llama, extractAllLocations, getAllCoordinates, getAllGeocodes
+from Model_Utils.model_Utils import explicit_filtering, process_NER, predict_llama, extractAllLocations, getAllCoordinates, getAllGeocodes, getNeighborhoods
 from Model_Utils.helper_functions import clean_df
 
 import numpy as np
@@ -126,10 +126,13 @@ def geolocate_articles(df):
 
         # Geocode the Coordinates (Get the Tract and County)
         df[['Tracts', 'Counties']] = df.progress_apply(lambda row: pd.Series(getAllGeocodes(row['Locations'], row['Coordinates'])), axis=1)
+        
+        # Get the Neighborhoods
+        df["Neighborhoods"] = df.progress_apply(getNeighborhoods, axis=1)
 
         # Drop the rows that are missing information
         print("[DEBUG] Data Frame ", df)
-        df = df.dropna(subset=["Location", "Coordinates", "Tract", "County"]) # Clean the rows that are missing information
+        df = df.dropna(subset=["Locations", "Coordinates", "Tracts", "Counties", "Neighborhoods"]) # Clean the rows that are missing information
         print("[DEBUG] Data Frame after dropping NaN ", df)
         
         return df
