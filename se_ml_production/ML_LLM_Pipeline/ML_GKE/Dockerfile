@@ -12,6 +12,7 @@ COPY ./ML_Service_GKE .
 
 ENV GOOGLE_APPLICATION_CREDENTIALS=/code/keys/naacp-ser-acc.json
 
-ENV PYTHONPATH "${PYTHONPATH}:/code"
+# ENV PYTHONPATH "${PYTHONPATH}:/code"
+ENV PYTHONPATH="/code"
 
 CMD ["python", "main.py"]

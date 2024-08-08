@@ -1,184 +1,239 @@
-import ast
+from tqdm import tqdm
+tqdm.pandas()
+
 import requests
 from global_state import global_instance
 
+from Model_Utils.helper_functions import load_cache, save_cache, check_time
+
+# Try finding location from title
 def explicit_filtering(header):
-    known_locs_path = "./geodata/known_locs.json"
-    with open(known_locs_path, 'r') as file:
-        known_locs_dict = json.load(file)
-        
+    known_title_locs = load_cache("./geodata/known_locs.json")
+    # unwanted_entities = load_cache("./geodata/unwanted_entities.json")
+
+    
     lowercase_header = header.lower()
-    for key in known_locs_dict.keys():
-        if (key in lowercase_header):
-            return [key, known_locs_dict[key]]   
+    for location in known_title_locs.keys():
+        if (location.lower() in lowercase_header):
+            return location
+            # With Cache
+            # if location not in unwanted_entities["FAC"]:
+            #     return location
+             
     return None
 
-predict_NER = lambda x: [(entity, entity.label_) for entity in global_instance.get_data("nlp_ner")(x).ents] if (x != None and x != "") else None
-def predict_NER_def(x):
-    """
-    Run NER on a Body of text.
-    """
+# Return the first valid facility found, or organization if none are found
+def valid_facility(entities, firstPass):
+    # unwanted_entities = load_cache("./geodata/unwanted_entities.json")
+
+    if (firstPass): 
+        for entity in entities:
+            # If it's a valid facility, return it
+            # if (entity.label_ == "FAC" and entity.text not in unwanted_entities["FAC"]):
+            if (entity.label_ == "FAC"):
+                return entity.text
+        else:
+            return None
+    
+    # Process for the LLM Prediction Pass
+    else:
+        first_org = None
+        for entity in entities:
+            # If it's a valid facility, return it
+            #if (entity.label_ == "FAC" and entity.text not in unwanted_entities["FAC"]):
+            if (entity.label_ == "FAC"):
+                return entity.text
+            
+            # If it's a valid organization, save it (but don't return in case there's a facility later on)
+            # if (first_org == None and entity.label_ == "ORG" and entity.text not in unwanted_entities["ORG"]):
+            if (first_org == None and entity.label_ == "ORG"):
+                first_org = entity.text
+        else:             
+            return first_org # Return regardless of whether it's None or not 
+
+# Run NER on the body of the article and return first valid facility
+def run_NER(text, firstPass=True):
+    nlp = global_instance.get_data("nlp_ner")
     try:
-        return predict_NER(x)
-    except Exception as e:
-        print(e)
+        if (text == None or text == ""):
+            return None
+        
+        entities = nlp(text).ents
+        return valid_facility(entities, firstPass)
+        
+    except Exception as error:
+        print(error)
         return None
     
-def explicit_filtering_NER(col, truncate=True):
+# Process the text in chunks and return the first valid facility found
+chunk_size = 100
+def chunk_processing(text, chunk_size=chunk_size):
+    # Split text into smaller chunks
+    chunks = split_text_into_chunks(text, chunk_size)
+
+    # Process each chunk and return if a valid facilty is found
+    for chunk in chunks:
+        result = run_NER(chunk)
+        if result is not None:
+             return result
+    return None
+
+# Split article text into chunks of specified size
+def split_text_into_chunks(text, chunk_size=chunk_size):
+    words = text.split()
+    chunks = [' '.join(words[i:i + chunk_size]) for i in range(0, len(words), chunk_size)]
+    return chunks
+
+@check_time
+def process_NER(article, truncate=True):
     """
-    Wrapper for NER on for the first pass of NER on Body. If 'truncate' is true, then we get the first 500 words.
+    Process the NER on the body of the article and return the first valid facility found. If 'truncate' is true, then we get the first 500 words.
     """
     try:
-        if (col['Explicit_Pass_1'] != None): # We already found an explicit mention in the title
-            print(f"Passed on {col['Headline']}")
+        if (article['Explicit_Pass'] != None): 
+            print(f"Has location from title: {article['hl1']}")
             return None
+        
         else:
-            if (truncate):
-                return predict_NER_def(" ".join(col['Body'].split(" ")[:500]))  
+            if (truncate): # Truncate the text to the first 500 words
+                text = " ".join(article['Body'].split(" ")[:500])
             else:
-                return predict_NER_def(col['Body'])
-    except Exception as e:
-        print(e)
+                text = article['Body']
+            return chunk_processing(text)
+    except Exception as error:
+        print(error)
         return None
-    
-def filter_loc_explicit(x):
-    """
-    Filter the explicit mentions in first NER Pass
-    """
-    if (x == None):
-        return None
-    res = []
-    for tup in x:
-        if (len(tup) >= 2): 
-            if (("GPE" in tup[1] and "Boston" not in tup[0] and "Massachusetts" not in tup[0])
-                or ("ORG" in tup[1]) 
-                or ("FAC" in tup[1])
-                or ("LOC" in tup[1])
-            ):
-                res.append((tup[0], tup[1].strip()))
-    priority = {'FAC': 1, 'ORG': 2, 'LOC': 3, 'GPE': 4}
-    sorted_list = sorted(res, key=lambda x: priority[x[1]])
-    
-    return sorted_list
 
-def getLongLatsForFAC(x):
+def run_llm(title, body):
     """
-    Gets the longitude and latitude for 'FAC' locations.
-    """
-    if (x == None or len(x) == 0):
-        return None  
-    
-    location = x[0][0] # (Location, Label)
-    if (x[0][1] == "FAC" or "Boston" in location): # Check if we have Boston + 'FAC' Label
-        response = global_instance.get_data("googleMapsClient").client.geocode(f"{location}, Boston")
-    elif(x[0][1] == "FAC"): # Check if we have 'FAC' Label
-        response = global_instance.get_data("googleMapsClient").client.geocode(f"{location}, Massachusetts")
-    else:
-        return None # Doesn't have 'FAC' Label
-        
-    if (len(response) == 0):
-        return None  
-    latitude = response[0]['geometry']['location']['lat']
-    longitude = response[0]['geometry']['location']['lng']
-    
-    return [longitude, latitude]
-
-def predict_llama(col):
-    """
-    Runs the input through an LLM prompt on a Body of text.
+    Run the LLM model on the title and body of the article.
     """
     try:
-        if (col['Explicit_Pass_1'] != None or col['NER_Pass_1_Coordinates'] != None): # We already found an explicit mention in the previous passes
-            print(f"Passed on {col['Headline']}")
+        nlp_llm = global_instance.get_data("nlp_llm")
+        return nlp_llm.invoke({"headline": title, "Body": body})
+    except Exception as error:
+        print(error)
+        return None
+
+#TODO: Comply with token limit of 2048 for Llama
+# Run the LLM model on the articles that haven't been tagged with a location yet. Then run NER on the LLM prediction
+@check_time
+def predict_llama(article):
+    try:
+        # If the article does not have an explicit location or NER location, run LLM
+        if (article['Explicit_Pass'] != None):
+            print(f"Has location from title: {article['hl1']}")
+            return None
+        elif (article['NER_Pass'] != None):
+            print(f"Has location from NER: {article['hl1']}")
             return None
         else:
-            return global_instance.get_data("nlp_llm").invoke({"headline": col['Headline'], "Body": col['Body']})
-    except Exception as e:
-        print(e)
+            llama_prediction = run_llm(article['hl1'], article['body'])
+            print(llama_prediction)
+            return run_NER(llama_prediction, False)
+    except Exception as error:
+        print(error)
+        return None
+
+# Get the locations from the most specific pass for a given article
+def extractLocations(article):
+    for key in ['Explicit_Pass', 'NER_Pass', 'LLM_Pass']:
+        location = article.get(key)
+        if location is not None:
+            return location
+    return None
+
+# Make a call to the Google Maps API to get the coordinates of the location
+def callGoogleMapsAPI(location):
+    try:
+        gmaps = global_instance.get_data("googleMapsClient").client
+
+        # Locations are limited to Massachusetts for now
+        geocode_result = gmaps.geocode(f"{location}, Massachussetts", components={"administrative_area_level": "MA", "country": "US"})
+        
+        if (len(geocode_result) > 0):
+            longitude = geocode_result[0]['geometry']['location']['lng']
+            latitude = geocode_result[0]['geometry']['location']['lat']
+            return longitude, latitude
+        else:
+            return None
+    except Exception as error:
+        print(error)
         return None
     
-def remove_first_comma(x):
-    if (x[:1] == ","):
-        return x[2:]
-    else:
-        return x
+# Get the coordinates of the location
+def getCoordinates(location): # Valid labels are FAC for NER_Pass; FAC and ORG for NER_Prediction
+    if (location == None or len(location) == 0): return None  
 
-def format_NER(x):
-    x = str(x)
-    res = []
-    if (x != None):
-        input = x.replace("(","").replace("[","").replace("]","").replace("'","").split(")") 
-        for word in input:
-            res.append(remove_first_comma(word).strip())
-    return res 
-
-def filter_loc(x):
-    res = []
-    for tup in x:
-        cleaned_tup = tup.strip().split(",")
-        if (len(cleaned_tup) >= 2): 
-            if (("GPE" in cleaned_tup[1] and "Boston" not in cleaned_tup[0] and "Massachusetts" not in cleaned_tup[0])
-                or ("ORG" in cleaned_tup[1]) 
-                or ("FAC" in cleaned_tup[1])
-                or ("LOC" in cleaned_tup[1])
-            ):
-                res.append((cleaned_tup[0], cleaned_tup[1].strip()))
-    priority = {'FAC': 1, 'ORG': 2, 'LOC': 3, 'GPE': 4}
-    sorted_list = sorted(res, key=lambda x: priority[x[1]])
-    
-    return sorted_list
-    
-def getLongLats(x):
-    """
-    Get the longitude and latitudes based on NER outputs.
-    """
-    if (len(x) == 0):
-        return None  
-        
-    location = x[0][0] # (Location, Label)
-    if (x[0][1] == "ORG" or x[0][1] == "FAC" or "Boston" in location):
-        response = global_instance.get_data("googleMapsClient").client.geocode(f"{location}, Boston")
-    else:
-        response = global_instance.get_data("googleMapsClient").client.geocode(f"{location}, Massachusetts")
-    if (len(response) == 0):
-        return None  
-    latitude = response[0]['geometry']['location']['lat']
-    longitude = response[0]['geometry']['location']['lng']
+    longitude, latitude = callGoogleMapsAPI(location)
     return [longitude, latitude]
 
-def query_census_api(longitude, latitude):
-    """
-    Queries the U.S Census API for tracts.
-    """
-    county = "NO COUNTY"
-    url = f"https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x={longitude}&y={latitude}&benchmark=Public_AR_Current&vintage=Census2020_Current&format=json"
+    # This is with cache
+    # Only get coordinates if the location is not already known
+    if (location in known_locations):
+        longitude, latitude = known_locations[location]["coordinates"]
+    else:
+        # Get coordinates and save to cache
+        longitude, latitude = callGoogleMapsAPI(location)
+        known_locations[location] = {"coordinates": [longitude, latitude], "tract": None, "county": None}
+        save_cache(known_locations, known_locations_path)
+
+    return [longitude, latitude]
+
+# Get the census tract of the location
+def query_census_api(location, coordinates):
+    longitude, latitude = coordinates
+    base_url = f'https://geocoding.geo.census.gov/geocoder/geographies/coordinates?'
+    survey_ver = f'&benchmark=4&vintage=4&layers=2020 Census Blocks&format=json'
+    url = f'{base_url}x={longitude}&y={latitude}{survey_ver}'
+
     response = requests.get(url)
+
+    # Check if response is valid
     if (response.status_code == 200):
         results = response.json()
-        census_tracts = results['result']['geographies'].get('Census Tracts', [])
-        if (census_tracts):
-            return census_tracts[0].get('TRACT', 'No TRACT found'), county # Returning the TRACT of the first census tract found
-    return "No TRACT found", county  # Return this if API call failed or no tracts found
+        try:
+            tract = results['result']['geographies']['2020 Census Blocks'][0]['TRACT']
+            county = results['result']['geographies']['2020 Census Blocks'][0]['COUNTY']
 
-def getTractList(col):
-    """
-    Get the Tracts based on Coordinate outputs.
-    """
-    coordinates = []
-    tract_list = [] # Initialize an empty list to store TRACT information  
+            return str(tract), str(county)
+        except IndexError:
+            print("Unable to retrieve census geography for: " + location)
+        except KeyError:
+            print("Location is outside of the United States: " + location)
+        except Exception as error:
+            print(error)
     
-    if (col['Explicit_Pass_1'] != None): # If we got the locations from the first explicit pass
-        coordinates = col['Explicit_Pass_1'][1]
-    elif(col['NER_Pass_1_Coordinates'] != None): # If we got locations from the very first NER pass (specific locs only)
-        coordinates = col['NER_Pass_1_Coordinates']
-    elif (col['NER_Sorted_Coordinates'] != None): # Finally, if we got locations from llama + NER pass
-        coordinates = col['NER_Sorted_Coordinates']
-    else: # Must be a very hard/bad article :-(
-        return None 
-        
-    longitude = coordinates[0]
-    latitude = coordinates[1]
-    TRACT, COUNTY = query_census_api(longitude,latitude)
-    tract_list.append(TRACT)
+    print("API call failed for: " + location + " with coordinates" + str(coordinates))
+    return None, None # Return this if API call failed or no tracts found
+
+
+# Get the census tract and county of the location
+def geocode(location, coordinates):
+    if (location is None or len(location) == 0): return None, None  
+
+    if (coordinates is None or len(coordinates) == 0): return None, None  
+
+    # Get the tract and county from the location
+    Tract, County = query_census_api(location, coordinates)
+    return Tract, County
+
+# With Cache
+
+# def geocode(location):
+#     if (location is None or len(location) == 0): return None, None  
+
+#     # Only geocode if it's not known
+#     Tract = known_locations[location]["tract"]
+#     County = known_locations[location]["county"]
+#     if (Tract is None or County is None):
+#         # Geocode article
+#         coordinates = known_locations[location]["coordinates"]
+#         Tract, County = query_census_api(location, coordinates)
+
+#         # Save to cache
+#         known_locations[location]["tract"] = Tract
+#         known_locations[location]["county"] = County
+#         save_cache(known_locations, known_locations_path)
     
-    return tract_list
+#     return Tract, County

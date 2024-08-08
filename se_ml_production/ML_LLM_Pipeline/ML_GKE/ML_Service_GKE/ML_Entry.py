@@ -77,18 +77,10 @@ def run_pipeline(df, upload_id: str, user_id: str, upload_timestamp: str):
 		print("[DEBUG] Final DF.")
 		print(final_df)
 
-		# Obtain coordinates
-		final_df["Coordinates"] = final_df["Explicit_Pass_1"].combine_first(final_df["NER_Pass_1_Coordinates"]).combine_first(final_df["NER_Sorted_Coordinates"])
-
 		packaged_data_df = final_df.drop(columns=[
-		    'llama_prediction',
-		    'Explicit_Pass_1',
-		    'NER_Pass_1',
-			'NER_Pass_1_Sorted',
-			'NER_Pass_1_Coordinates',
-			'NER_prediction',
-			'NER_Sorted',
-			'NER_Sorted_Coordinates',
+		    'Explicit_Pass',
+		    'NER_Pass',
+			'LLM_Pass',
 			'topic_model_body',
 			'tokens',
 			'ada_embedding',
@@ -109,7 +101,7 @@ def run_pipeline(df, upload_id: str, user_id: str, upload_timestamp: str):
 			"Publish Date": "pub_date",
 			"Publisher": "pub_name",
 			"Paths": "link",
-			"Tracts": "tracts",
+			"Tract": "tracts",
 			"closest_topic_client": "openai_labels",
 		})
 		print(packaged_data_df["tracts"])

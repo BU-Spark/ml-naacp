@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: naacp-gcs
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: naacp-gcs
+  template:
+    metadata:
+      labels:
+        app: naacp-gcs
+    spec:
+      containers:
+      - name: naacp-gcs-container
+        image: us-east1-docker.pkg.dev/special-michelle/naacp/test_gcs
+        ports:
+        - containerPort: 8080
+        env:
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /code/app/keys/naacp-ser-acc.json

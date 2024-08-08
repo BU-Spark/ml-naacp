@@ -117,7 +117,9 @@ async def upload_file(file: UploadFile = None, user_id: str = Form(...)):
 			return JSONResponse(content={"filename": file.filename, "status": "All are DUPLICATES. No files processed."}, status_code=200)
 		
 		# If there are no duplicates, we convert the pd -> csv then we upload to google storage bucket
-		upload_df_to_gcs(gcp_db, "shiply_csv_bucket", str(
+		# bucket_name = "shiply_csv_bucket"
+		bucket_name = "test_bucket_naacp" # For Testing Purposes
+		upload_df_to_gcs(gcp_db, bucket_name, str(
 			"data/" + global_instance.get_data("upload_id") + "-" + global_instance.get_data("userID") + ".csv"
 			), cleaned_df)
 

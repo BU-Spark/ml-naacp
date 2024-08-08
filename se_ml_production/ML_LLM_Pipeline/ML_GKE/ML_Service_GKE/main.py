@@ -86,7 +86,8 @@ def process_data():
             if (db == None):
                 raise Exception("No database was given!")
             
-            bucket = db.bucket("shiply_csv_bucket")
+            # bucket = db.bucket("shiply_csv_bucket")
+            bucket = db.bucket("test_bucket_naacp") # For Testing Purposes
             blob = bucket.blob(f"data/{target_csv_file}")
             data = blob.download_as_bytes()
             df = pd.read_csv(BytesIO(data))

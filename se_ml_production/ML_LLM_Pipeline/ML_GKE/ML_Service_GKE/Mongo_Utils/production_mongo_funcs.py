@@ -1,5 +1,6 @@
 import ast 
 
+import pandas as pd
 from tqdm import tqdm
 tqdm.pandas()
 
@@ -40,29 +41,43 @@ neigh_tract_dict = {
 	"South End": ["070301", "070302", "070502", "070501", "071101", "070600", "070700", "070902", "070802", "071201", "070402"],
 	"West Roxbury": ["980900", "130406", "981900", "130404", "110601", "130300", "130402", "130200", "130101"],
 	"South Boston Waterfront": ["981202", "060602", "060603", "061204", "060604"],
-	"North End": ["030200", "030100", "030500", "030400"]
+	"North End": ["030200", "030100", "030500", "030400"],
+	"Cambridge": ["354300", "354200", "353102", "353600", "352300", "354100", "359400", "353300", "353700", "353200", 
+	"354601", "355000", "354602", "354000", "354901", "354902", "353900", "354700", "352102", "354500", "354800", "352600", 
+	"354400", "353101", "352900", "353000", "352101", "353800", "352500", "352400", "352700", "352200", "352800"
+  	],
+	"Chelsea": ["160400", "160103", "160102", "160300", "160601", "160602", "160501", "160502", "160200"],
+	
+
 }
 
-def find_neighborhood_by_tract(search_dict, neigh_to_find):
+def find_neighborhood_by_tract(search_dict, tract_to_find):
 	for key, values in search_dict.items():
-		if (neigh_to_find in values):
+		if (tract_to_find in values):
 			return key
-	return None
+	return "Unknown Neighborhood"
 
-def find_neighborhood_by_tract_string(search_dict, neigh_to_find):
-	for key, values in search_dict.items():
-		if (neigh_to_find in values):
-			return key
-	return "Greater Boston"
-
-def locateNeighborhoods(x):
-	if (x == None):
-		return string_to_list("Unknown")
-	tract = x[0]
+def locateNeighborhoods(tract):
+	if (tract == None):
+		return None
+	
 	query = find_neighborhood_by_tract(neigh_tract_dict, tract)
 	if (query != None):
 		return string_to_list(query)
-	return string_to_list("Greater Boston")
+	else:
+		return string_to_list("None")
+
+def handle_tract_to_neighborhood(tracts):
+    neighborhoods = []
+    
+    for tract in tracts:
+        neighborhood = locateNeighborhoods(tract)
+        if neighborhood is not None:
+            if (neighborhood[0] == "Unkown Neighborhood"):
+                print(f"Unknown neighborhood for tract: {tract}")
+            neighborhoods.extend(neighborhood)
+
+    return neighborhoods
 
 def convert_to_datesum(s):
 	date_formatted = s.replace('-', '').replace(' ', '').replace(':', '')
@@ -245,8 +260,6 @@ def pack_tracts(db_prod, df):
 		tract_collection_name = "tracts_data"
 		tract_collection = db_prod[tract_collection_name]
 
-		collection_list = db_prod.list_collection_names()
-
 		# Check for existence of collection
 		collection_list = db_prod.list_collection_names()
 
@@ -257,9 +270,15 @@ def pack_tracts(db_prod, df):
 
 		tracts_lists = df['tracts'].to_numpy()
 		tagging_list = df['content_id'].to_numpy()
+		print("[DEBUG] Tract List ", tracts_lists)
 
 		for n_idx in range(len(tracts_lists)):
 			tract_list = tracts_lists[n_idx]
+			
+			if pd.isna(tract_list):
+				tract_list = [] 
+			elif not isinstance(tract_list, list):
+				tract_list = [tract_list] 
 
 			for tract in tract_list:
 				# Here we update the tags/articles by tracts
@@ -271,7 +290,7 @@ def pack_tracts(db_prod, df):
 				else: # We didn't find one and we have to label it as unknown
 					unknown_tract = {
 						'tract': tract,
-						'neighborhood': f"{find_neighborhood_by_tract_string(neigh_tract_dict, tract)}",
+						'neighborhood': f"{find_neighborhood_by_tract(neigh_tract_dict, tract)}",
 						'articles': [tagging_list[n_idx]]
 					}
 					tract_collection.insert_one(unknown_tract)     

@@ -12,6 +12,7 @@ COPY ./Cloud_Run ./app
 
 ENV GOOGLE_APPLICATION_CREDENTIALS=/code/app/keys/naacp-ser-acc.json
 
-ENV PYTHONPATH "${PYTHONPATH}:/code/app"
+# ENV PYTHONPATH "${PYTHONPATH}:/code/app"
+ENV PYTHONPATH="/code/app"
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]

@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: naacp-gke
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: naacp-gke
+  template:
+    metadata:
+      labels:
+        app: naacp-gke
+    spec:
+      containers:
+      - name: naacp-gke-container
+        image: us-east1-docker.pkg.dev/special-michelle/naacp/test_gke 
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            cpu: 4750m
+            ephemeral-storage: 10Gi
+            memory: 7Gi
+          requests:
+            cpu: 4750m
+            ephemeral-storage: 10Gi
+            memory: 7Gi

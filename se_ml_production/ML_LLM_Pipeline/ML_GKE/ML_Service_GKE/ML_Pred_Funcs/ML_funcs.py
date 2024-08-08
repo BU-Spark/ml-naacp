@@ -1,20 +1,16 @@
 import re
-import json
-import pandas as pd
-from bs4 import BeautifulSoup
 
+import pandas as pd
 from tqdm import tqdm
 tqdm.pandas()
 
 from global_state import global_instance
-from Model_Utils.model_Utils import explicit_filtering, explicit_filtering_NER, filter_loc_explicit, getLongLatsForFAC, predict_llama, predict_NER_def, format_NER, filter_loc, getLongLats, getTractList
+from Model_Utils.model_Utils import explicit_filtering, process_NER, predict_llama, extractLocations, getCoordinates, geocode
+from Model_Utils.helper_functions import clean_df
 
-import os
-import tiktoken
 import numpy as np
 from transformers import pipeline
 from sklearn.metrics import adjusted_rand_score
-from openai import OpenAI, AsyncOpenAI
 from sklearn.metrics.pairwise import cosine_similarity
 from tenacity import retry, wait_random_exponential, stop_after_attempt
 
@@ -96,21 +92,10 @@ def topic_modeling(df):
         print(f"[Error] topic_modeling() ran into an error! \n[Raw Error]: {e}")
         raise
 
-def explicit_filtering(header):
-    known_locs_path = "./data_prod/known_locs.json"
-    with open(known_locs_path, 'r') as file:
-        known_locs_dict = json.load(file)
-        
-    lowercase_header = header.lower()
-    for key in known_locs_dict.keys():
-        if (key in lowercase_header):
-            return [key, known_locs_dict[key]]   
-    return None
-
 # ====== GEOLOCATION PIPELINE ======
 def geolocate_articles(df):
     """
-    Processes the dataaframe given by func. Does Entity Recongition/Geolocation on articles.
+    Processes the dataaframe given by func. Does Entity Recognition and Geolocation on articles.
     
     Parameters
     ----
@@ -121,43 +106,32 @@ def geolocate_articles(df):
     Returns a Dataframe of geolocated articles
     """
     try: 
-        df = pd.concat([df['content_id'], df['Headline'], df['Body']], axis=1) # We just need the ID, Header, and Body to run the pipeline
-        df["llama_prediction"] = None # Add the llama_prediction
+        df = clean_df(df)
 
-        # Remove duplicates based on Headers
-        duplicates = df.duplicated(subset=['Headline']) 
-        print(f"[INFO] Duplicates in DF:\n {duplicates.value_counts()}")
-        df = df.drop_duplicates(subset=['Headline'])
+        ### Explicit Mention Pass ###
+        df["Explicit_Pass"] = df["Headline"].progress_apply(explicit_filtering)
 
-        # Clean the HTML in the Body and header -> Regex Cleaner 
-        func_clean_html = lambda x: BeautifulSoup(x, "html.parser").get_text() # HTML Cleaner
-        df['Body'] = df['Body'].progress_apply(func_clean_html)
-        df['Headline'] = df['Headline'].progress_apply(func_clean_html)
-        func_clean_regex = lambda x: ' '.join([item for item in re.findall(r'[A-Za-z0-9!@#$%^&*().]+', x) if len(item) > 1]) # Regex Cleaner
-        df['Body'] = df['Body'].progress_apply(func_clean_regex)
-        df['Headline'] = df['Headline'].progress_apply(func_clean_regex)
-
-        ### Explicit Mention Layer ###
-        df["Explicit_Pass_1"] = df["Headline"].progress_apply(explicit_filtering)
-
-        ### NER Pass 1 ### 
+        ### NER Direct Pass ### 
         # * This may take the longest, perhaps Truncate the output?
-        df['NER_Pass_1'] = df.progress_apply(explicit_filtering_NER, axis=1) # Automatically Truncates and performs NER on first 500
-        df['NER_Pass_1_Sorted'] = df['NER_Pass_1'].progress_apply(filter_loc_explicit) # We sort and pull out 'FAC' locations
-        df['NER_Pass_1_Coordinates'] = df['NER_Pass_1_Sorted'].progress_apply(getLongLatsForFAC) # Using Google maps, get the longitude and latitudes
+        df["NER_Pass"] = df.progress_apply(process_NER, axis=1) # Automatically Truncates and performs NER on first 500 words
+                
+        ### Llama + NER Inference Pass ###
+        df['LLM_Pass'] = df.progress_apply(predict_llama, axis=1)
+       
+        # Extract Locations from Passes
+        df['Locations'] = df.progress_apply(extractLocations, axis=1)
 
-        ### Llama + NER Inference ###
-        df['llama_prediction'] = df.progress_apply(predict_llama, axis=1) # This is going to flood the logs. Sorry :-(
-        df['NER_prediction'] = df['llama_prediction'].progress_apply(predict_NER_def)
+        # Get the Coordinates for the Locations
+        df['Coordinates'] = df['Locations'].progress_apply(getCoordinates)
 
-        df['NER_Sorted'] = df['NER_prediction'].progress_apply(format_NER) # Format
-        df['NER_Sorted'] = df['NER_Sorted'].progress_apply(filter_loc) # Sort the location in priority of "FAC", "LOC", etc...
+        # Geocode the Coordinates (Get the Tract and County)
+        df[['Tracts', 'Counties']] = df.progress_apply(lambda row: pd.Series(geocode(row['Locations'], row['Coordinates'])), axis=1)
 
-        df['NER_Sorted_Coordinates'] = df['NER_Sorted'].progress_apply(getLongLats) # Get Longitude and Latitudes
-        df['Tracts'] = df.progress_apply(getTractList, axis=1) # Get the tracts
-
-        df = df.dropna(subset=["Tracts"]) # Clean those rows that doesn't have a Tract
-
+        # Drop the rows that are missing information
+        print("[DEBUG] Data Frame ", df)
+        df = df.dropna(subset=["Location", "Coordinates", "Tract", "County"]) # Clean the rows that are missing information
+        print("[DEBUG] Data Frame after dropping NaN ", df)
+        
         return df
     except Exception as e: 
         print(f"[Fatal Error] geolocate_articles() ran into an Error! Data is not saved!\nRaw Error:{e}")
