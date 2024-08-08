@@ -12,7 +12,7 @@ from Utils.spinner import Spinner
 from Model_Utils.openAI import OpenAIClient
 from Model_Utils.google_Maps import GoogleMapsClient
 from Mongo_Utils.mongoDB_manager import MongoDBManager
-from Model_Utils.model_Loaders import load_llama_7B, load_spanmarker_NER
+from Model_Utils.model_Loaders import load_llama_3_1, load_spanmarker_NER
 
 def fetch_llm_models(zip_file=False, filename=None, google_repo_path=None):
 	"""
@@ -174,8 +174,8 @@ def bootstrap_pipeline():
 		spinner.stop()
 		llm_model_directory_path = "./llm_models"
 		google_path_dir = "Llama_Models"
-		model_file = "llama-2-7b-chat.Q4_K_M.gguf.zip"
-		required_model_file = "llama-2-7b-chat.Q4_K_M.gguf"
+		model_file = "Meta-Llama-3.1-8B-Instruct-Q4_K_M.zip"
+		required_model_file = "Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf"
 		if (not os.path.exists(llm_model_directory_path)):
 			print(f"No {llm_model_directory_path}! Creating...")
 			os.makedirs(llm_model_directory_path)
@@ -225,7 +225,7 @@ def bootstrap_pipeline():
         
 		spinner = Spinner("Loading Models...")
 		spinner.start()
-		nlp_llm = load_llama_7B()
+		nlp_llm = load_llama_3_1()
 		nlp_ner = load_spanmarker_NER()
 		spinner.stop()
         

@@ -1,3 +1,4 @@
+import re
 from tqdm import tqdm
 tqdm.pandas()
 
@@ -11,7 +12,7 @@ def explicit_filtering(header):
     known_title_locs = load_cache("./geodata/known_locs.json")
     # unwanted_entities = load_cache("./geodata/unwanted_entities.json")
 
-    
+        
     lowercase_header = header.lower()
     for location in known_title_locs.keys():
         if (location.lower() in lowercase_header):
@@ -115,6 +116,27 @@ def run_llm(title, body):
         print(error)
         return None
 
+def filter_llama_output(log):
+    # Define regex patterns to match the lines we want to remove
+    llama_print_timings_pattern = re.compile(r'llama_print_timings:.*')
+    llama_generate_pattern = re.compile(r'Llama.generate:.*')
+
+    lines = log.split('\n')
+
+    filtered_lines = []
+
+    for line in lines:
+        # If the line matches any of the unwanted patterns, skip it
+        if llama_print_timings_pattern.match(line) or llama_generate_pattern.match(line):
+            continue
+
+        filtered_lines.append(line.strip())
+
+    # Join the filtered lines back into a single string
+    filtered_log = '\n'.join(filtered_lines)
+    
+    return filtered_log
+
 #TODO: Comply with token limit of 2048 for Llama
 # Run the LLM model on the articles that haven't been tagged with a location yet. Then run NER on the LLM prediction
 @check_time
@@ -129,7 +151,8 @@ def predict_llama(article):
             return None
         else:
             llama_prediction = run_llm(article['hl1'], article['body'])
-            print(llama_prediction)
+            print(f"\nLlama 3.1 Prediction: \n{cleaned_prediction} \n")
+
             return run_NER(llama_prediction, False)
     except Exception as error:
         print(error)
