@@ -12,7 +12,7 @@ from ML_Entry import run_pipeline
 from global_state import global_instance
 from bootstrappers import bootstrap_pipeline, validate_bootstrap, bootstrap_MongoDB_Prod
 
-from Mongo_Utils.get_Neighborhoods import get_neighborhoods
+from Mongo_Utils.mongo_neighborhoods import get_neighborhoods
 
 # Use a thread-safe queue instead of a list
 message_queue = Queue()

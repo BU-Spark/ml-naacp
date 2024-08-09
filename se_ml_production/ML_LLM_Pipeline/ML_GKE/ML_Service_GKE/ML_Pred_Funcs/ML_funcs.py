@@ -5,7 +5,7 @@ from tqdm import tqdm
 tqdm.pandas()
 
 from global_state import global_instance
-from Model_Utils.model_Utils import explicit_filtering, process_NER, predict_llama, extractAllLocations, getAllCoordinates, getAllGeocodes, getNeighborhoods
+from Model_Utils.model_Utils import explicit_filtering, process_NER, process_LLM, getAllLocations, getAllCoordinates, getAllGeocodes, getAllNeighborhoods
 from Model_Utils.helper_functions import clean_df
 
 import numpy as np
@@ -118,10 +118,10 @@ def geolocate_articles(df):
         df["NER_Pass"] = df.progress_apply(process_NER, axis=1) # Automatically Truncates and performs NER on first 500 words
                 
         ### Llama + NER Inference Pass ###
-        df['LLM_Pass'] = df.progress_apply(predict_llama, axis=1)
+        df['LLM_Pass'] = df.progress_apply(process_LLM, axis=1)
        
         # Extract Locations from Passes
-        df['Locations'] = df.progress_apply(extractAllLocations, axis=1)
+        df['Locations'] = df.progress_apply(getAllLocations, axis=1)
 
         # Get the Coordinates for the Locations
         df['Coordinates'] = df['Locations'].progress_apply(getAllCoordinates)
@@ -130,7 +130,7 @@ def geolocate_articles(df):
         df[['Tracts', 'Counties']] = df.progress_apply(lambda row: pd.Series(getAllGeocodes(row['Locations'], row['Coordinates'])), axis=1)
         
         # Get the Neighborhoods
-        df["Neighborhoods"] = df.progress_apply(getNeighborhoods, axis=1)
+        df["Neighborhoods"] = df.progress_apply(getAllNeighborhoods, axis=1)
 
         # Drop the rows that are missing information
         print("[DEBUG] Data Frame ", df)

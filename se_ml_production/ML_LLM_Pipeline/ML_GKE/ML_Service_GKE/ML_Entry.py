@@ -67,6 +67,13 @@ def run_pipeline(df, upload_id: str, user_id: str, upload_timestamp: str):
 		print("[DEBUG] Final DF.")
 		print(final_df)
 
+		print(f"[DEBUG] Number of articles located per Pass: ")
+		passes = ["Explicit_Pass", "NER_Pass", "LLM_Pass"]
+
+		for column in passes:
+			count = final_df[column].notna().sum()
+			print(f"{column} Located {count} articles.")
+
 		packaged_data_df = final_df.drop(columns=[
 		    'Explicit_Pass',
 		    'NER_Pass',

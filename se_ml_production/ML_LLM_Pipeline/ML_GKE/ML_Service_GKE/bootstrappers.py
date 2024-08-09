@@ -119,6 +119,9 @@ def fetch_and_load_taxonomy_lists(db, openAIClient, fetch=True):
 			blob_3.download_to_filename("./data_prod/embedding_similarity_label.csv")
 			blob_4 = bucket.blob("Entity_Recognition_Pipeline_Data/known_locs.json") # Here is for Explicit mention pass
 			blob_4.download_to_filename("./data_prod/known_locs.json")
+			blob_5 = bucket.blob("Entity_Recognition_Pipeline_Data/unwanted_locations.json") # To remove unwanted locations from passes
+			blob_5.download_to_filename("./data_prod/unwanted_locations.json")
+
 			all_topics_embedding, selected_topics_embedding, client_taxonomy_df, all_topics_list, selected_topics_list = load_taxonomy_lists(openAIClient)
 
 			return all_topics_embedding, selected_topics_embedding, client_taxonomy_df, all_topics_list, selected_topics_list
@@ -137,7 +140,7 @@ def bootstrap_pipeline():
 			"Asad_Topics_List.xlsx", # Topic Modeling
 			"Content_Taxonomy.csv", # Topic Modeling
 			"embedding_similarity_label.csv", # Topic Modeling
-			"neighborhoods.json" # Mapping of Tracts to Neighborhoods
+			"unwanted_locations.json" # Entity Recognition | Unwanted Locs
 		]
 		dependency_resolver_arr = []
         

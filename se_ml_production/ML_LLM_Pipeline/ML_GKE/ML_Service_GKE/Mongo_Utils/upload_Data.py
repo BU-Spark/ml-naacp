@@ -4,7 +4,7 @@ tqdm.pandas()
 
 import secret
 
-from Mongo_Utils.get_Neighborhoods import neigh_tract_dict
+from Mongo_Utils.mongo_neighborhoods import neigh_tract_dict
 from Mongo_Utils.mongo_funcs import get_collection, convert_to_datesum
 
 # ==== Packing Funcs ====
@@ -44,13 +44,13 @@ def pack_neighborhoods(db_prod, df):
 		neigh_collection = get_collection(db_prod, "neighborhood_data")
 
 		# TODO: Delete this after neighborhood data is updated
-		for neighborhood in neigh_tract_dict.keys():
-			neigh_collection.update_one(
-				{'value': neighborhood},
-				{'$setOnInsert': {'tracts': neigh_tract_dict[neighborhood]}},
-				upsert = True # Creates a new document of it if it doesn't exist
-			)
-		print("[INFO] Neighborhoods Collection Successfully Populated!")
+		# for neighborhood in neigh_tract_dict.keys():
+		# 	neigh_collection.update_one(
+		# 		{'value': neighborhood},
+		# 		{'$setOnInsert': {'tracts': neigh_tract_dict[neighborhood]}},
+		# 		upsert = True # Creates a new document of it if it doesn't exist
+		# 	)
+		# print("[INFO] Neighborhoods Collection Successfully Populated!")
 
 		# Save all new neighborhoods with associated tracts and articles
 		for n, neighborhoods in enumerate(df['neighborhoods']):
