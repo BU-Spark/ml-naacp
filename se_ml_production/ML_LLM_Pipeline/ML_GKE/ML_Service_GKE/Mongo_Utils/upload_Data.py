@@ -3,9 +3,9 @@ from tqdm import tqdm
 tqdm.pandas()
 
 import secret
-from datetime import datetime
 
-from Model_Utils.model_Utils import neigh_tract_dict
+from Mongo_Utils.get_Neighborhoods import neigh_tract_dict
+from Mongo_Utils.mongo_funcs import get_collection, convert_to_datesum
 
 # ==== Packing Funcs ====
 def send_to_production(client, df):
@@ -43,19 +43,21 @@ def pack_neighborhoods(db_prod, df):
 	try:
 		neigh_collection = get_collection(db_prod, "neighborhood_data")
 
+		# TODO: Delete this after neighborhood data is updated
+		for neighborhood in neigh_tract_dict.keys():
+			neigh_collection.update_one(
+				{'value': neighborhood},
+				{'$setOnInsert': {'tracts': neigh_tract_dict[neighborhood]}},
+				upsert = True # Creates a new document of it if it doesn't exist
+			)
+		print("[INFO] Neighborhoods Collection Successfully Populated!")
+
 		# Save all new neighborhoods with associated tracts and articles
 		for n, neighborhoods in enumerate(df['neighborhoods']):
 			for neighborhood in neighborhoods:
-				if (neighborhood not in neigh_tract_dict.keys()):
-					tracts = []
-				else:
-					tracts = neigh_tract_dict[neighborhood]
-
 				neigh_collection.update_one(
 					{'value': neighborhood},
-					{'$addToSet': {'articles': df['content_id'][n]},
-					 '$setOnInsert': {'tracts': tracts}
-					}, upsert = True # Creates a new document of it if it doesn't exist
+					{'$addToSet': {'articles': df['content_id'][n]}}
 				)   
 
 		print("[INFO] Neighborhoods Successfully inserted!")
@@ -118,30 +120,3 @@ def pack_locations(db_prod, df):
 	except Exception as err:
 		raise Exception(f"[Error!] Error in sending Locations Data\nError: {err}")
 	return
-
-# ==== Utility Funcs ====
-# Convert date to a number for easier comparison
-def convert_to_datesum(s):
-	date_formatted = s.replace('-', '').replace(' ', '').replace(':', '')
-
-	year = date_formatted[-4:]
-	month_num = date_formatted[3:6]
-	month = str(datetime.strptime(month_num, "%b").month)
-	day = date_formatted[6:8]
-
-	if (int(month) <= 9):
-		year = str(year) + "0"
-		return int(year + month + day)
-
-	return int(year + month + day)
-
-# Get the collection from the database
-def get_collection(db_prod, collection_name):
-	collection_list = db_prod.list_collection_names()
-
-	# Initialize the collection if it doesn't exist
-	if collection_name not in collection_list:
-		db_prod.create_collection(collection_name)
-		print(f"[INFO] Collection '{collection_name}' created.")
-
-	return db_prod[collection_name]

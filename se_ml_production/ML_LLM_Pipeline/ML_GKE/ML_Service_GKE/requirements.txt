@@ -115,6 +115,7 @@ Pygments==2.18.0
 pymongo==4.6.0
 python-dateutil==2.9.0.post0
 python-multipart==0.0.6
+python-Levenshtein==0.25.1
 pytz==2024.1
 PyYAML==6.0.1
 regex==2024.7.24

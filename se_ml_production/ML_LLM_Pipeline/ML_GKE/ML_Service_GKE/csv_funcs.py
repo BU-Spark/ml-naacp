@@ -5,7 +5,6 @@ from fastapi import UploadFile # For typing
 from collections import Counter
 from fastapi import UploadFile
 from global_state import global_instance
-from Mongo_Utils.mongo_funcs import connect_MongoDB_Prod
 
 def is_duplicate_article(tag, articles_collection):
 	queryArticles = {

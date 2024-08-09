@@ -175,14 +175,16 @@ def bootstrap_pipeline():
 		spinner.stop()
 		llm_model_directory_path = "./llm_models"
 		google_path_dir = "Llama_Models"
-		model_file = "Meta-Llama-3.1-8B-Instruct-Q4_K_M.zip"
-		required_model_file = "Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf"
+		# model_file = "Meta-Llama-3.1-8B-Instruct-Q4_K_M.zip"
+		# required_model_file = "Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf"
+		model_file = "llama-2-7B-chat.Q4_K_M.gguf.zip"
+		required_model_file = "llama-2-7B-chat.Q4_K_M.gguf"
 		if (not os.path.exists(llm_model_directory_path)):
 			print(f"No {llm_model_directory_path}! Creating...")
 			os.makedirs(llm_model_directory_path)
 			spinner = Spinner("Fetching models (This might take a while)...")
 			spinner.start()
-			fetch_llm_models(zip_file=True, filename=model_file, google_repo_path=google_path_dir)
+			fetch_llm_models(zip_file=False, filename=required_model_file, google_repo_path=google_path_dir)
 			spinner.stop()
 		else:
 			print(f"Found! {llm_model_directory_path}!")
@@ -192,7 +194,7 @@ def bootstrap_pipeline():
 				spinner.stop()
 				spinner = Spinner("Model file not found! Pulling models...")
 				spinner.start()
-				fetch_llm_models(zip_file=True, filename=model_file, google_repo_path=google_path_dir)
+				fetch_llm_models(zip_file=False, filename=required_model_file, google_repo_path=google_path_dir)
 				spinner.stop()
 			else:
 				spinner.stop()

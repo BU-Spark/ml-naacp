@@ -2,7 +2,7 @@ import pandas as pd
 
 from global_state import global_instance
 from ML_Pred_Funcs.ML_funcs import geolocate_articles, topic_modeling
-from Mongo_Utils.production_mongo_funcs import send_to_production
+from Mongo_Utils.upload_Data import send_to_production
 from Mongo_Utils.mongo_funcs import update_job_status
 
 # ====== Here we run our pipeline ====== 
@@ -92,12 +92,13 @@ def run_pipeline(df, upload_id: str, user_id: str, upload_timestamp: str):
 			"Publisher": "pub_name",
 			"Paths": "link",
 			"Tracts": "tracts",
+			"Coordinates": "coordinates",
 			"Counties": "counties",
 			"Neighborhoods": "neighborhoods",
 			"Locations": "locations",
 			"closest_topic_client": "openai_labels",
 		})
-		print(f"[DEBUG] Dataframe tracts {packaged_data_df["tracts"]}")
+
 		print(f"[DEBUG] Dataframe Columns {packaged_data_df.columns}")
 
 		print("[INFO] Sending Inferences to Production DB.")

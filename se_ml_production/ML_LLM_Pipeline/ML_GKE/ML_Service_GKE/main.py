@@ -10,8 +10,9 @@ import nltk
 import secret
 from ML_Entry import run_pipeline
 from global_state import global_instance
-from Mongo_Utils.mongo_funcs import connect_MongoDB_Prod
 from bootstrappers import bootstrap_pipeline, validate_bootstrap, bootstrap_MongoDB_Prod
+
+from Mongo_Utils.get_Neighborhoods import get_neighborhoods
 
 # Use a thread-safe queue instead of a list
 message_queue = Queue()
@@ -73,6 +74,16 @@ def startup_event():
             defined_collection_names, # Argument 2
             connection_obj=db_manager.act_con[0]
             )
+        
+        # Save neighborhood data to global state
+
+        neighborhoods = db_manager.run_job(
+            get_neighborhoods,
+            db_manager.act_con[0]['connection'], # Argument 1 (1st connection)
+            connection_obj=db_manager.act_con[0]
+        )
+
+        global_instance.update_data("neighborhoods", neighborhoods)
     except Exception as e:
         print(f"[Error!] FATAL ERROR! | {e}")
         raise
