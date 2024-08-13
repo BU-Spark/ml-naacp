@@ -118,7 +118,7 @@ def geolocate_articles(df):
         df["NER_Pass"] = df.progress_apply(process_NER, axis=1) # Automatically Truncates and performs NER on first 500 words
                 
         ### Llama + NER Inference Pass ###
-        df['LLM_Pass'] = df.progress_apply(process_LLM, axis=1)
+        df['LLM_Pass'] = df.progress_apply(process_LLM, axis=1) # Also truncates to 500 words
        
         # Extract Locations from Passes
         df['Locations'] = df.progress_apply(getAllLocations, axis=1)

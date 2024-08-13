@@ -121,6 +121,7 @@ def getAllCoordinates(locations):
             coordinates_list.append(coordinates)
     return coordinates_list
 
+# Get the geocodes (tract and county) of each of the locations
 def getAllGeocodes(locations, coordinates):
     tracts = []
     counties = []

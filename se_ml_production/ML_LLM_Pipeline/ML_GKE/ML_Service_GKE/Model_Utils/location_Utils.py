@@ -255,6 +255,7 @@ def get_valid_entities(entities):
     valid_orgs = []
 
     # TODO: Limit the number of entities to consider
+    # TODO: Check frequency and order them by popularity
     for entity in entities:
         loc = normalize_location(entity.text)
         if (entity.label_ == "FAC"):

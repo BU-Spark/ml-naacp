@@ -123,7 +123,8 @@ def process_data():
 
             print("[DEBUG] Dataframe Content:\n")
             print(df)
-
+            
+            # TODO: Run articles in batches
             # We run the ML Pipeline here
             run_pipeline(df, message_data["upload_id"], message_data["userID"], message_data["uploadTimeStamp"])
 

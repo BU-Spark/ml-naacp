@@ -112,7 +112,8 @@ def pack_locations(db_prod, df):
 					{'value': location},
 					{'$addToSet': {'articles': df["content_id"][n]},
 	  				 '$setOnInsert': {'neighborhood': df["neighborhoods"][n][i]},
-					 '$setOnInsert': {'tract': df["tracts"][n][i]}
+					 '$setOnInsert': {'tract': df["tracts"][n][i]},
+					 '$setOnInsert': {'coordinates': df["coordinates"][n][i]}
 	  				},
 					upsert = True 
 				)          
