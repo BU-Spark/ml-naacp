@@ -1,5 +1,6 @@
 import re
 from fuzzywuzzy import fuzz
+from collections import Counter
 
 from Model_Utils.helper_functions import load_cache
 
@@ -19,196 +20,69 @@ def normalize_location(location):
     
     # Expand common abbreviations
     abbreviation_map = {
-        'st': 'street',
-        'ave': 'avenue',
-        'blvd': 'boulevard',
-        'rd': 'road',
-        'GBH': 'WGBH, Boston Public Media',
-        'CfA': 'the Harvard-Smithsonian Center for Astrophysics',
-        'Granite Broadcasting': 'Granite Broadcasting Holdings',
-        'Mystic Aquarium': 'the Mystic Aquarium',
-        'North Shore Aquarium': 'North Shore N.E. Aquarium',
-        'Blurb': 'Blurb.com',
-        'Sweetwater': 'Sweetwater Co.',
-        'Beverly PD': 'Beverly Police',
-        'PBS': 'Public Broadcasting Service',
-        'ITV': 'ITV plc',
-        'ITV Global': 'ITV Global Entertainment Ltd',
-        'GBH Channel 2': 'GBH 2',
-        'BBC 2': 'BBC Two',
-        'Parabola': 'the Parabola Center',
-        'Treez': 'Treez of Lyfe',
-        'NOVA PBS': 'NOVA',
-        'Shutterstock Images': 'Shutterstock',
-        'Eky Studio': 'bezikus Eky Studio',
-        'AP': 'Associated Press',
-        'Newton Marriott Hotel': 'Newton Marriott',
-        'AIM': 'AIM (Alternative Investment Market)',
-        'MassReconnect Program': 'MassReconnect',
-        'McKinsey & Company': 'McKinsey Company',
-        'NPR': 'National Public Radio',
-        'Purdue': 'Purdue Pharma',
-        'Johnson & Johnson': 'Johnson Johnson McKesson',
-        'McKesson': 'Johnson Johnson McKesson',
-        'Wal-Mart': 'Walmart',
-        'DOJ': 'the Justice Department',
-        'CDC': 'the Centers for Disease Control and Prevention',
-        'GBH Studios': 'GBH Studio',
-        'Boston Library': 'the Boston Public Library',
-        'NEC Quartet': 'the New England Conservatory Fellowship String Quartet',
-        'SSA': 'Social Security Administration',
-        'DOE': 'the Energy Department',
-        'CBPP': 'the Center on Budget and Policy Priorities',
-        'T': 'MBTA',
-        'Orange Line MBTA': 'the Orange Line',
-        'GBH Newsroom': 'GBH News',
-        'Northeastern': 'Northeastern University',
-        'Red Line MBTA': 'the Red Line',
-        'Fraser Studio': 'GBH Fraser Performance Studio',
-        'GBH Music Studio': 'GBH Music',
-        'Rasa Quartet': 'Unique Music Adventure Rasa Quartet',
-        'Baroque': 'Boston Baroque',
-        'Rasa Quartet': 'The Rasa String Quartet',
-        'Grosso': 'Concerto Grosso',
-        'Harmonia': 'Harmonia Artificioso',
-        'Globe': 'Boston Globe',
-        'Senate': 'U.S. Senate',
-        'AP': 'Associated Press',
-        'Nevada Independent': 'the Nevada Independent',
-        'DESE': 'Department of Elementary and Secondary Education',
-        'BPS': 'Boston Public Schools',
-        'Boston Schools': 'the Boston Public Schools',
-        'DHS': 'the Department of Homeland Security',
-        'McDonald\'s': 'McDonald',
-        'Council': 'City Council',
-        'K12 Security': 'K12 Security Information Exchange',
-        'Senate Homeland Security Committee': 'the U.S. Senate Committee on Homeland Security and Governmental Affairs',
-        'Worcester Council': 'Worcester City Council',
-        'Nubian': 'Nubian Square',
-        'Copley': 'Copley Square',
-        'Sunrise Movement': 'the Sunrise Movement Socialist Alternative',
-        'Democratic Socialists': 'the Democratic Socialist party',
-        'DPH': 'the Department of Public Health',
-        'COVID-19': 'COVID',
-        'Boston Hall': 'Boston City Hall',
-        'BPR': 'Boston Public Radio',
-        'Boston PD': 'Boston Police',
-        'Boston Library': 'the Boston Public Library',
-        'Black Lives Matter': 'BLM',
-        'Bay Windows News': 'Bay Windows',
-        'South End News': 'the South End News',
-        'NECN': 'New England Cable News',
-        'GBH Children’s Programming': 'GBH Kids',
-        'Under the Radar Program': 'Under the Radar',
-        'Basic Black Program': 'Basic Black',
-        'WH': 'White House',
-        'GOP': 'the Republican party',
-        'Patriots': 'the New England Patriots',
-        'PS': 'Public Schools',
-        'Mission Hill': 'Mission Hill School',
-        'Hinckley Allen': 'Hinckley Allen Snyder LLP',
-        'Mission Hill': 'Mission Hill street',
-        'MA DESE': 'The Massachusetts Department of Elementary and Secondary Education',
-        'U.S. Capitol': 'Capitol',
-        'BPR': 'Boston Public Radio',
-        'Congress': 'U.S. Congress',
-        'Mass Avenue': 'Mass. Ave',
-        'Melnea Cass': 'Melnea Cass Boulevard',
-        'Newport Street': 'Newport',
-        'Massachusetts Avenue': 'Mass Avenue',
-        'Mass. Ave & Cass': 'Mass and Cass',
-        'GBH World': 'GBH WORLD Channel',
-        'WGBH Foundation': 'WGBH Educational Foundation'
+        "us": "united states",
+        'co': 'company',
+        'pd': 'police department',
+        'wgbh': 'gbh',
+        'cfa': 'the harvard-smithsonian center for astrophysics',
+        'pbs': 'public broadcasting service',
+        'ap': 'associated press',
+        'aim': 'aim (alternative investment market)',
+        '&': 'and',
+        'npr': 'national public radio',
+        'doj': 'the justice department',
+        'cdc': 'the centers for disease control and prevention',
+        'ssa': 'social security administration',
+        'doe': 'the energy department',
+        'cbpp': 'the center on budget and policy priorities',
+        'mbta': 'massachusetts bay transportation authority',
+        't': 'massachusetts bay transportation authority',
+        'globe': 'boston globe',
+        'senate': 'capitol',
+        'congress': 'capitol',
+        'legislature': 'capitol',
+        'justice': 'department of justice',
+        'house': 'u.s. house of representatives',
+        'oval office': 'the white house',
+        'dese': 'department of elementary and secondary education',
+        'bps': 'boston public schools',
+        'dhs': 'the department of homeland security',
+        'fed': 'federal reserve',
+        'fbi': 'the federal bureau of investigation',
+        'epa': 'the environmental protection agency',
+        'cdc': 'the centers for disease control and prevention',
+        'nar': 'national association of realtors',
+        'adl': 'anti-defamation league',
+        'cbp': 'customs and border protection',
+        'cia': 'central intelligence agency',
+        'fda': 'food and drug administration',
+        'dep': 'department of environmental protection',
+        'un': 'united nations',
+        'faa': 'federal aviation administration',
+        'ntsb': 'national transportation safety board',
+        'dua': 'department of unemployment assistance',
+        'necn': 'new england cable news',
+        'nar': 'national association of realtors',
+        'who': 'world health organization',
+        'irap': 'international refugee assistance project',
+        'ncaa': 'national collegiate athletic association',
+        'council': 'city council',
+        'dph': 'the department of public health',
+        'usda': 'the us department of agriculture',
+        'bpr': 'boston public radio',
+        'blm': 'black lives matter',
+        'irs': 'internal revenue service',
+        'necn': 'new england cable news',
+        'wh': 'white house',
+        'gop': 'the republican party',
+        'ps': 'public schools',
+        'ma dese': 'the massachusetts department of elementary and secondary education',
     }
     for abbr, full in abbreviation_map.items():
         location = re.sub(r'\b' + abbr + r'\b', full, location)
     
-    # Handle common synonyms or variants
-    synonym_map = {
-        'ny': 'new york',
-        'la': 'los angeles',
-        'sf': 'san francisco',
-        'WGBH': 'GBH',
-        'Harvard-Smithsonian Astrophysics': 'the Harvard-Smithsonian Center for Astrophysics',
-        'Granite Broadcasting Holdings': 'Granite Broadcasting',
-        'the Mystic Aquarium': 'Mystic Aquarium',
-        'North Shore N.E. Aquarium': 'North Shore Aquarium',
-        'Blurb.com': 'Blurb',
-        'Sweetwater Co.': 'Sweetwater',
-        'Beverly Police': 'Beverly PD',
-        'Public Broadcasting Service': 'PBS',
-        'ITV plc': 'ITV',
-        'ITV Global Entertainment Ltd': 'ITV Global',
-        'GBH 2': 'GBH Channel 2',
-        'BBC Two': 'BBC 2',
-        'the Parabola Center': 'Parabola',
-        'Treez of Lyfe': 'Treez',
-        'NOVA': 'NOVA PBS',
-        'Shutterstock': 'Shutterstock Images',
-        'bezikus Eky Studio': 'Eky Studio',
-        'Associated': 'Associated Press',
-        'Newton Marriott': 'Newton Marriott Hotel',
-        'AIM': 'AIM (Alternative Investment Market)',
-        'MassReconnect': 'MassReconnect Program',
-        'McKinsey Company': 'McKinsey & Company',
-        'NPR': 'National Public Radio',
-        'Purdue Pharma': 'Purdue',
-        'Johnson Johnson McKesson': 'Johnson & Johnson, McKesson',
-        'Walmart': 'Wal-Mart',
-        'the Justice Department': 'DOJ',
-        'the Centers for Disease Control and Prevention': 'CDC',
-        'GBH Studio': 'GBH Studios',
-        'the Boston Public Library': 'Boston Library',
-        'the New England Conservatory Fellowship String Quartet': 'NEC Quartet',
-        'Social Security': 'SSA',
-        'the Energy Department': 'DOE',
-        'the Center on Budget and Policy Priorities': 'CBPP',
-        'MBTA': 'T',
-        'the Orange Line': 'Orange Line MBTA',
-        'GBH News': 'GBH Newsroom',
-        'Northeastern University': 'Northeastern',
-        'the Red Line': 'Red Line MBTA',
-        'GBH Fraser Performance Studio': 'Fraser Studio',
-        'GBH Music': 'GBH Music Studio',
-        'Unique Music Adventure Rasa Quartet': 'Rasa Quartet',
-        'Boston Baroque': 'Baroque',
-        'The Rasa String Quartet': 'Rasa Quartet',
-        'Concerto Grosso': 'Grosso',
-        'Harmonia Artificioso': 'Harmonia',
-        'Boston Globe': 'Globe',
-        'U.S. Senate': 'Senate',
-        'Associated Press': 'AP',
-        'the Nevada Independent': 'Nevada Independent',
-        'Department of Elementary and Secondary Education': 'DESE',
-        'Boston Public Schools': 'BPS',
-        'the Boston Public Schools': 'Boston Schools',
-        'the Department of Homeland Security': 'DHS',
-        'McDonald': 'McDonald\'s',
-        'City Council': 'Council',
-        'K12 Security Information Exchange': 'K12 Security',
-        'the U.S. Senate Committee on Homeland Security and Governmental Affairs': 'Senate Homeland Security Committee',
-        'Worcester City Council': 'Worcester Council',
-        'the Boston Public Library': 'Boston Library',
-        'Nubian Square': 'Nubian',
-        'Copley Square': 'Copley',
-        'the Sunrise Movement Socialist Alternative': 'Sunrise Movement',
-        'the Democratic Socialist party': 'Democratic Socialists',
-        'the Department of Public Health': 'DPH',
-        'COVID': 'COVID-19',
-        'Boston City Hall': 'Boston Hall',
-        'Boston Public Radio': 'BPR',
-        'Boston Police': 'Boston PD',
-        'the Boston Globe': 'Globe',
-        'City Council': 'Council',
-        'GBH News': 'GBH Newsroom',
-        'Boston Public Radio': 'BPR',
-        'Centers for Disease Control': 'CDC',
-        'the Department of Family Medicine': 'Family Medicine Department',
-        'Boston Medical Center': 'BMC',
-    }
-
-    for synonym, full in synonym_map.items():
-        location = re.sub(r'\b' + synonym + r'\b', full, location)
+    # TODO: (maybe) Handle synonyms, variants
+    # TODO: (maybe) Handle country/state/city abbreviations   
     
     # Remove extra spaces
     location = re.sub(r'\s+', ' ', location)
@@ -216,9 +90,42 @@ def normalize_location(location):
     return location
 
 # Check if two locations are the same
-def are_same_location(loc1, loc2, threshold=85):
+def are_same_location(loc1, loc2, threshold=80):
+    if loc1 == loc2:
+        return True
+    
+    if loc1 in loc2 or loc2 in loc1:
+        return True
+    
     similarity = fuzz.token_set_ratio(loc1, loc2)
     return similarity >= threshold
+
+# Combine two locations if they are the same
+def combine_locations(location, locations):
+    if (locations is None or len(locations) == 0):
+        return [location]
+
+    # check for news subdomains
+    if "gbh" in location:
+        location = "gbh"
+    elif "npr" in location:
+        location = "npr"
+
+    new_locs = []
+
+    for loc in locations:
+        if are_same_location(location, loc):
+            # Replace the existing location if the new one is longer
+            if len(location) > len(loc):
+                new_locs.append(location)
+            else:
+                new_locs.append(loc)
+        else:
+            new_locs.append(loc)
+
+    new_locs.append(location)
+
+    return new_locs
 
 # Check if a location can be added to the list of locations
 def can_add_location(location, locations):
@@ -226,12 +133,34 @@ def can_add_location(location, locations):
 
     if location in unwanted_entities:
         return False
+    elif invalid_location(location):
+        return False
+    else:
+        return True
     
-    for loc2 in locations:
-        if are_same_location(location, loc2):
-            return False
+# Check if a location is unwanted with regex
+def invalid_location(location):
+    # List of common unwanted entity types
+    unwanted_places = [
+        r'\bstreet\b', 
+        r'\bsquare\b', 
+        r'\bavenue\b', 
+        r'\bboulevard\b',
+        r'\broad\b', 
+        r'\blane\b', 
+        r'\bdrive\b', 
+        r'\bdriveway\b',
+        r'\bhighway\b',
+        r'\bfreeway\b'
+    ]
     
-    return True
+    # Create a combined regex pattern
+    pattern = re.compile('|'.join(unwanted_places))
+    
+    # Check if the location matches any unwanted entity type
+    if pattern.search(location):
+        return True
+    return False
 
 # Try finding locations from title
 def get_valid_title_locations(header):
@@ -243,31 +172,65 @@ def get_valid_title_locations(header):
         loc = normalize_location(location)
         if (loc in header and can_add_location(loc, locations_list)):
             locations_list.append(loc)
+        
+        if (len(locations_list) == 5):
+            break
     
     if (len(locations_list) == 0):
         return None
     else:
         return locations_list
+
+# Get the top 5 most common locations
+def get_main_5(facilities, organizations):
+
+    fac_freq = Counter(facilities)
+    org_freq = Counter(organizations)
+
+    top_fac = fac_freq.most_common(1) if facilities else []
+    top_org = org_freq.most_common(1) if organizations else []
+
+    combined = facilities + organizations
+    combined_freq = Counter(combined)
+
+    if top_fac:
+        combined_freq.pop(top_fac[0][0], None)
+    if top_org:
+        combined_freq.pop(top_org[0][0], None)
     
+    top_combined = combined_freq.most_common(3)
+
+    top_entities = top_fac + top_org + top_combined
+    
+    top_entities = [entity[0] for entity in top_entities]
+
+    return top_entities
+
+
+def add_entity(entity, valid_list):
+    loc = normalize_location(entity)
+    if (can_add_location(loc)):
+        valid_list = combine_locations(loc, valid_list)
+    
+    return valid_list
+
 # Return all valid facilities and organizations found
-def get_valid_entities(entities):    
-    valid_facilities = []
+def get_valid_entities(entities):
+    valid_facs = []
     valid_orgs = []
 
-    # TODO: Limit the number of entities to consider
-    # TODO: Check frequency and order them by popularity
-    for entity in entities:
-        loc = normalize_location(entity.text)
-        if (entity.label_ == "FAC"):
-            if (can_add_location(loc, valid_facilities)):
-                valid_facilities.append(loc)
-        elif (entity.label_ == "ORG"):
-            if (can_add_location(loc, valid_orgs)):
-                valid_orgs.append(loc)
-    
-    valid_entities = valid_facilities + valid_orgs
+    if (entities is None or len(entities) == 0):
+        return None
 
+    for entity in entities:
+        if (entity.label_ == "FAC"):
+            valid_facs = add_entity(entity.text, valid_facs)
+        elif (entity.label_ == "ORG"):
+            valid_orgs = add_entity(entity.text, valid_orgs)
+
+    valid_entities = get_main_5(valid_facs, valid_orgs)
+    
     if (len(valid_entities) == 0):
         return None
-    else: 
+    else:
         return valid_entities
