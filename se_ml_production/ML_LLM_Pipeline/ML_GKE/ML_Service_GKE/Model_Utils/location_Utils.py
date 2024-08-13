@@ -128,7 +128,7 @@ def combine_locations(location, locations):
     return new_locs
 
 # Check if a location can be added to the list of locations
-def can_add_location(location, locations):
+def can_add_location(location):
     unwanted_entities = load_cache("./data_prod/unwanted_locations.json")
 
     if location in unwanted_entities:
@@ -170,7 +170,7 @@ def get_valid_title_locations(header):
     locations_list = []
     for location in known_locations:
         loc = normalize_location(location)
-        if (loc in header and can_add_location(loc, locations_list)):
+        if (loc in header and can_add_location(loc)):
             locations_list.append(loc)
         
         if (len(locations_list) == 5):

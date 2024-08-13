@@ -73,7 +73,7 @@ langcodes==3.4.0
 langsmith==0.1.93
 language_data==1.2.0
 libclang==18.1.1
-llama_cpp_python==0.2.83
+llama_cpp_python==0.2.88
 marisa-trie==1.2.0
 Markdown==3.6
 markdown-it-py==3.0.0

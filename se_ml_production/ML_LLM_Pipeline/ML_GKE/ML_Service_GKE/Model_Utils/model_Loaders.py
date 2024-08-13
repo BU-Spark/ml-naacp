@@ -23,8 +23,8 @@ def load_llama_3_1():
 	"""
 	Llama 3.1 trained on 8B parameters, medium model (4 Quant), Instruct type. Created by Meta.
 	"""
-	# llama_model_path = "./llm_models/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf"
-	llama_model_path = "./llm_models/llama-2-7B-chat.Q4_K_M.gguf"
+	llama_model_path = "./llm_models/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf"
+	# llama_model_path = "./llm_models/llama-2-7B-chat.Q4_K_M.gguf"
 
 	prompt = PromptTemplate(
 		input_variables=["headline", "body"],

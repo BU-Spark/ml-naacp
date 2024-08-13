@@ -27,14 +27,24 @@ def update_job(size, message, status="PROCESSING"):
 
 def format_df(df, articles):
 	# Here we just add the UserID and UploadID
-	final_df["userID"] = global_instance.get_data("userID")
-	final_df["uploadID"] = global_instance.get_data("upload_id")
+	df["userID"] = global_instance.get_data("userID")
+	df["uploadID"] = global_instance.get_data("upload_id")
 
-	final_df = final_df.drop(columns=["content_id", "Body", "Headline"])
+	df = df.drop(columns=["content_id", "Body", "Headline"])
 
-	final_df = pd.concat([final_df, articles], axis=1)
+	final_df = pd.concat([df, articles], axis=1)
 
-	packaged_data_df = df.drop(columns=[
+	print("[DEBUG] Final DF.")
+	print(final_df)
+
+	print(f"[DEBUG] Number of articles located per Pass: ")
+	passes = ["Explicit_Pass", "NER_Pass", "LLM_Pass"]
+
+	for column in passes:
+		count = final_df[column].notna().sum()
+		print(f"{column} located {count} articles.")
+		
+	packaged_data_df = final_df.drop(columns=[
 		'Explicit_Pass',
 		'NER_Pass',
 		'LLM_Pass',
@@ -59,16 +69,6 @@ def format_df(df, articles):
 		"Locations": "locations",
 		"closest_topic_client": "openai_labels",
 	})
-
-	print("[DEBUG] Final DF.")
-	print(final_df)
-
-	print(f"[DEBUG] Number of articles located per Pass: ")
-	passes = ["Explicit_Pass", "NER_Pass", "LLM_Pass"]
-
-	for column in passes:
-		count = final_df[column].notna().sum()
-		print(f"{column} located {count} articles.")
 
 	print(f"[DEBUG] Dataframe Columns {packaged_data_df.columns}")
 	return packaged_data_df
@@ -105,13 +105,13 @@ def run_pipeline(df, upload_id: str, user_id: str, upload_timestamp: str):
 		
 		# We are now in the processing state! Process articles in batches of 100
 		batch_size = 100
-		batch_count = df.shape[0] // batch_size
+		batch_count = 1 + df.shape[0] // batch_size
 		total_count = 0
 		for batch in range(0, df.shape[0], batch_size):
 			articles = df[batch:batch+batch_size]
 
 			print(f"[INFO] Processing Batch {batch}/{batch_count}.")
-			update_job(articles.shape[0], f"INFERENCE PIPELINE IS PROCESSING [{batch}/{batch_count}].")
+			update_job(articles.shape[0], f"INFERENCE PIPELINE IS PROCESSING [{batch + 1}/{batch_count}].")
 
 			# Conduct Entity Recognition and return the new df
 			print("[INFO] Processing through Geolocation pipeline.")
