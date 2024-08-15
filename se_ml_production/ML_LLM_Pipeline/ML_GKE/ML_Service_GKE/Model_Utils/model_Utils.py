@@ -173,16 +173,4 @@ def getAllNeighborhoods(articles):
             neighborhoods.append("Unknown Neighborhood")
 
     return neighborhoods
-    # With Cache 
-    #         if (neighborhood[0] == "Unknown Neighborhood"):
-    #             location = articles['Locations'][i]
-    #             if (tract not in unknown_tracts):
-    #                 unknown_tracts[tract] = {"County": articles['Counties'][i], "Locations": [location]}
-    #                 print(f"Unknown neighborhood for location: {location} with tract: {tract}")
-    #             elif (location not in unknown_tracts[tract]["Locations"]):
-    #                 unknown_tracts[tract]["Locations"].append(location)
-    #                 print(f"Unknown neighborhood for location: {location} with tract: {tract}")
-    #         neighborhoods.extend(neighborhood)
-
-    # save_cache_to_file(unknown_tracts, unknown_tracts_path)
-    # return neighborhoods
+  
