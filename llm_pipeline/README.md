@@ -40,10 +40,6 @@ To install the necessary dependencies, follow these steps:
 2. **Install Python Dependencies**:
    - Install the required Python packages using `pip`:
 
-     ```bash
-     pip install -r requirements.txt
-     ```
-
 3. **Download NER Model**:
    - Download and install the required NER model:
 
