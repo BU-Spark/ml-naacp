@@ -80,9 +80,9 @@ def topic_modeling(df):
             if max(similarities) > 0.25:    
                 closest_topic_index = np.argmax(similarities) # Find the index of the topic with the highest similarity
                 closest_topic = client_topic_list[closest_topic_index] # Retrieve the closest topic embedding
-                closest_topic_list_client.append([closest_topic])
+                closest_topic_list_client.append(closest_topic)
             else:
-                closest_topic_list_client.append(['Other'])
+                closest_topic_list_client.append('Other')
             similarity_arr.append(max(similarities))
             
         df['closest_topic_client'] = closest_topic_list_client
@@ -133,9 +133,7 @@ def geolocate_articles(df):
         df["Neighborhoods"] = df.progress_apply(getAllNeighborhoods, axis=1)
 
         # Drop the rows that are missing information
-        print("[DEBUG] Data Frame ", df)
         df = df.dropna(subset=["Locations", "Coordinates", "Tracts", "Counties", "Neighborhoods"]) # Clean the rows that are missing information
-        print("[DEBUG] Data Frame after dropping NaN ", df)
         
         return df
     except Exception as e: 

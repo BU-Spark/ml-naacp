@@ -34,6 +34,8 @@ def format_df(df, articles):
 
 	final_df = pd.concat([df, articles], axis=1)
 
+	final_df = final_df.dropna(subset=["Locations"]).reset_index(drop=True)
+	
 	print("[DEBUG] Final DF.")
 	print(final_df)
 
@@ -110,7 +112,7 @@ def run_pipeline(df, upload_id: str, user_id: str, upload_timestamp: str):
 		for batch in range(0, df.shape[0], batch_size):
 			articles = df[batch:batch+batch_size]
 
-			print(f"[INFO] Processing Batch {batch}/{batch_count}.")
+			print(f"[INFO] Processing Batch {batch + 1} of {batch_count}.")
 			update_job(articles.shape[0], f"INFERENCE PIPELINE IS PROCESSING [{batch + 1}/{batch_count}].")
 
 			# Conduct Entity Recognition and return the new df
