@@ -1,0 +1,46 @@
+# Data manipulation
+pandas
+numpy
+
+# String manipulation and hashing
+fuzzywuzzy
+python-Levenshtein
+
+# Progress bars
+tqdm
+
+# BeautifulSoup for HTML parsing
+beautifulsoup4
+
+# Google Maps API and Requests
+googlemaps
+requests
+
+# Geopy for geolocation and distance calculations
+geopy
+
+# Spacy for NER
+spacy
+spacy-model-en-core-web-sm
+
+# Langchain and llama for LLMs
+langchain
+llama-cpp-python
+
+# MongoDB
+pymongo
+
+# Tenacity for retries
+tenacity
+
+# Environment variables
+python-dotenv
+
+# Sklearn for cosine similarity
+scikit-learn
+
+# OpenAI API
+openai
+
+# BSON for handling ObjectId
+bson
