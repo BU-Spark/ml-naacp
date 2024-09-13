@@ -20,15 +20,17 @@ requests
 geopy
 
 # Spacy for NER
-spacy
-spacy-model-en-core-web-sm
+spacy==3.7.2
+span_marker
+huggingface_hub==0.23.4
 
 # Langchain and llama for LLMs
 langchain
+langchain_community
 llama-cpp-python
 
 # MongoDB
-pymongo
+pymongo==4.2.0
 
 # Tenacity for retries
 tenacity
@@ -42,5 +44,4 @@ scikit-learn
 # OpenAI API
 openai
 
-# BSON for handling ObjectId
-bson
+openpyxl
