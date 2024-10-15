@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: naacp-gcs-service
+  name: naacp-gcs-service-3
 spec:
   type: LoadBalancer
   selector:
-    app: naacp-gcs
+    app: naacp-gcs-3
   ports:
     - protocol: TCP
       port: 80

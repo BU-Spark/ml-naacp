@@ -8,7 +8,7 @@ import pandas as pd
 from typing import Union
 from datetime import datetime
 from fastapi.responses import JSONResponse
-from fastapi import UploadFile, HTTPException, Query, Body, Form
+from fastapi import UploadFile, HTTPException, Query, Body, Form, Security, Depends
 from urllib.parse import unquote_plus
 from fastapi import APIRouter
 
@@ -24,6 +24,32 @@ from concurrent import futures
 from google.cloud import pubsub_v1
 import hashlib
 
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# API Key Token Authentication
+from fastapi.security.api_key import APIKeyHeader
+
+# Define API key name
+API_KEY_NAME = "X-API-KEY"
+api_key_header = APIKeyHeader(name=API_KEY_NAME)
+
+# Valid API key(s)
+VALID_API_KEYS = ["beri-stronk-key"]
+
+# Token authentication function
+async def check_api_key(api_key: str = Depends(api_key_header)):
+	if not api_key:
+		logger.warning(" No API key provided. Access forbidden.")
+		raise HTTPException(status_code=403, detail="Access forbidden: API key is missing.")
+	elif api_key not in VALID_API_KEYS:
+		logger.warning(f" Invalid API key attempted to connect: {api_key}")
+		raise HTTPException(status_code=403, detail="Access forbidden: Your API key is invalid.")
+	else:
+		logger.info(" API key successfully validated.")
+		return api_key
+	
 ml_router = APIRouter()
 
 def get_callback(
@@ -66,7 +92,7 @@ def create_content_ids(df):
 
 ### API Endpoints
 @ml_router.post("/upload_csv")
-async def upload_file(file: UploadFile = None, user_id: str = Form(...)):
+async def upload_file(file: UploadFile = None, user_id: str = Form(...), api_key: str = Depends(check_api_key)):
 	db_manager = global_instance.get_data("db_manager")
 	gcp_db = global_instance.get_data("gcp_db")
 
