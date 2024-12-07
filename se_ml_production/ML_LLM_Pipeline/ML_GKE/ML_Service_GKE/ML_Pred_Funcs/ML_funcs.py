@@ -5,7 +5,7 @@ from tqdm import tqdm
 tqdm.pandas()
 
 from global_state import global_instance
-from Model_Utils.model_Utils import explicit_filtering, process_NER, process_LLM, getAllLocations, getAllCoordinates, getAllGeocodes, getAllNeighborhoods
+from Model_Utils.model_Utils import explicit_filtering, process_NER, process_LLM, getAllLocations, getAllCoordinates, getMainLocations, getAllGeocodes, getAllNeighborhoods, removeRepeatedCoords
 from Model_Utils.helper_functions import clean_df
 
 import numpy as np
@@ -109,32 +109,44 @@ def geolocate_articles(df):
     """
     try: 
         df = clean_df(df)
+        
+        df["all_locations"] = None
 
         ### Explicit Mention Pass ###
         df["Explicit_Pass"] = df["Headline"].progress_apply(explicit_filtering)
 
+        df[["Explicit_Pass", "all_locations"]] = df.apply(lambda row: pd.Series(getAllCoordinates(row["Explicit_Pass"], row["all_locations"])), axis=1)
+
         ### NER Direct Pass ### 
         # * This may take the longest, perhaps Truncate the input?
         df["NER_Pass"] = df.progress_apply(process_NER, axis=1) # Automatically Truncates and performs NER on first 500 words
-                
+        df[["NER_Pass", "all_locations"]] = df.apply(lambda row: pd.Series(getAllCoordinates(row["NER_Pass"], row["all_locations"])), axis=1)
+
         ### Llama + NER Inference Pass ###
         df['LLM_Pass'] = df.progress_apply(process_LLM, axis=1) # Also truncates to 500 words
-       
+        df[["LLM_Pass", "all_locations"]] = df.apply(lambda row: pd.Series(getAllCoordinates(row["LLM_Pass"], row["all_locations"])), axis=1)
+
         # Extract Locations from Passes
-        df['Locations'] = df.progress_apply(getAllLocations, axis=1)
+        df['locations'] = df.progress_apply(getAllLocations, axis=1)
 
-        # Get the Coordinates for the Locations
-        df['Coordinates'] = df['Locations'].progress_apply(getAllCoordinates)
-
-        # Geocode the Coordinates (Get the Tract and County)
-        df[['Tracts', 'Counties']] = df.progress_apply(lambda row: pd.Series(getAllGeocodes(row['Locations'], row['Coordinates'])), axis=1)
+        # Get the Main Locations and separate the coordinates
+        df[['locations','coordinates']] = df.apply(lambda row: pd.Series(getMainLocations(row)), axis=1)
+        
+        # Geocode the Coordinates
+        df[['tracts', 'counties', 'states', 'cities']] = df.apply(lambda row: pd.Series(getAllGeocodes(row['locations'], row['coordinates'])), axis=1)
         
         # Get the Neighborhoods
-        df["Neighborhoods"] = df.progress_apply(getAllNeighborhoods, axis=1)
+        df["neighborhoods"] = df.progress_apply(getAllNeighborhoods, axis=1)
+
+        for column in ['locations', 'coordinates', 'tracts', 'counties', 'states', 'cities', 'neighborhoods']:
+            df[column] = df[column].apply(lambda x: None if (x is None or len(x) == 0) else x)
 
         # Drop the rows that are missing information
-        df = df.dropna(subset=["Locations", "Coordinates", "Tracts", "Counties", "Neighborhoods"]) # Clean the rows that are missing information
-        
+        df = df.dropna(subset=["locations", "coordinates", "tracts", "counties", 'states', 'cities', "neighborhoods"]).reset_index(drop=True) # Clean the rows that are missing information
+
+        # Remove repeated coordinates
+        df = df.apply(removeRepeatedCoords, axis=1)
+        df["_id"] = df["content_id"]
         return df
     except Exception as e: 
         print(f"[Fatal Error] geolocate_articles() ran into an Error! Data is not saved!\nRaw Error:{e}")

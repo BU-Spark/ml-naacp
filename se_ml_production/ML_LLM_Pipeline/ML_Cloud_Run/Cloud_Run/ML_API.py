@@ -8,7 +8,7 @@ import pandas as pd
 from typing import Union
 from datetime import datetime
 from fastapi.responses import JSONResponse
-from fastapi import UploadFile, HTTPException, Query, Body, Form, Security, Depends
+from fastapi import UploadFile, HTTPException, Request, Query, Body, Form, Security, Depends
 from urllib.parse import unquote_plus
 from fastapi import APIRouter
 
@@ -18,8 +18,9 @@ from global_state import global_instance
 from csv_funcs import read_csv, validate_csv
 from Mongo_Utils.mongo_funcs import update_job_status
 
+import secret
 import json
-from typing import Callable
+from typing import Callable, Optional
 from concurrent import futures
 from google.cloud import pubsub_v1
 import hashlib
@@ -31,12 +32,9 @@ logger = logging.getLogger(__name__)
 # API Key Token Authentication
 from fastapi.security.api_key import APIKeyHeader
 
-# Define API key name
-API_KEY_NAME = "X-API-KEY"
+API_KEY_NAME = secret.API_KEY_NAME
 api_key_header = APIKeyHeader(name=API_KEY_NAME)
-
-# Valid API key(s)
-VALID_API_KEYS = ["beri-stronk-key"]
+VALID_API_KEYS = secret.VALID_API_KEYS
 
 # Token authentication function
 async def check_api_key(api_key: str = Depends(api_key_header)):
@@ -92,15 +90,23 @@ def create_content_ids(df):
 
 ### API Endpoints
 @ml_router.post("/upload_csv")
-async def upload_file(file: UploadFile = None, user_id: str = Form(...), api_key: str = Depends(check_api_key)):
+async def upload_file(file: UploadFile = None, 
+					  user_id: str = Form(...), 
+					  org_id: Optional[str] = Form(None),
+					  api_key: str = Depends(check_api_key)):
 	db_manager = global_instance.get_data("db_manager")
 	gcp_db = global_instance.get_data("gcp_db")
+	# TODO: Require org_id and remove next lines: org_id: str = Form(...)
+	if not org_id:
+		org_id = user_id
 
 	try:
 		# Here we need to generate an Upload ID & have the user ID ready
 		# Assuming this runs sequentially, these variables shouldn't be changed until the prediction is finished!
 		global_instance.update_data("upload_id", str(uuid.uuid4())) # Should only run once!
 		global_instance.update_data("userID", user_id)
+		global_instance.update_data("orgID", org_id)
+		global_instance.update_data("filename", file.filename) 
 		global_instance.update_data("upload_timestamp", datetime.now())
 		global_instance.update_data("upload_status", "VALIDATING")
 
@@ -109,6 +115,8 @@ async def upload_file(file: UploadFile = None, user_id: str = Form(...), api_key
 			db_manager.act_con[0]['connection'], # Argument 1 (1st connection)
 			global_instance.get_data("upload_id"), 
 			global_instance.get_data("userID"),
+			global_instance.get_data("orgID"),
+			global_instance.get_data("filename"),
 			global_instance.get_data("upload_timestamp"), 
 			-1, 
 			global_instance.get_data("upload_status"),
@@ -133,6 +141,8 @@ async def upload_file(file: UploadFile = None, user_id: str = Form(...), api_key
 				db_manager.act_con[0]['connection'], # Argument 1 (1st connection)
 				global_instance.get_data("upload_id"), 
 				global_instance.get_data("userID"),
+				global_instance.get_data("orgID"),
+				global_instance.get_data("filename"),
 				global_instance.get_data("upload_timestamp"), 
 				0, 
 				global_instance.get_data("upload_status"),
@@ -161,6 +171,7 @@ async def upload_file(file: UploadFile = None, user_id: str = Form(...), api_key
 		data = {
 			"upload_id": global_instance.get_data("upload_id"),
 			"userID": global_instance.get_data("userID"),
+			"orgID": global_instance.get_data("orgID"),
 			"uploadTimeStamp": str(global_instance.get_data("upload_timestamp"))
 		}
 		data_str = json.dumps(data)
@@ -181,6 +192,8 @@ async def upload_file(file: UploadFile = None, user_id: str = Form(...), api_key
 			db_manager.act_con[0]['connection'], # Argument 1 (1st connection)
 			global_instance.get_data("upload_id"), 
 			global_instance.get_data("userID"),
+			global_instance.get_data("orgID"),
+			global_instance.get_data("filename"),
 			global_instance.get_data("upload_timestamp"), 
 			-1, 
 			global_instance.get_data("upload_status"),
@@ -201,6 +214,8 @@ async def upload_file(file: UploadFile = None, user_id: str = Form(...), api_key
 			db_manager.act_con[0]['connection'], # Argument 1 (1st connection)
 			global_instance.get_data("upload_id"), 
 			global_instance.get_data("userID"),
+			global_instance.get_data("orgID"),
+			global_instance.get_data("filename"),
 			global_instance.get_data("upload_timestamp"), 
 			-1, 
 			global_instance.get_data("upload_status"),

@@ -63,6 +63,7 @@ async def read_csv(file: UploadFile) -> pd.DataFrame:
 		raise Exception(f"Could not read and convert csv file to pandas df. Error: {e}")
 	return df
 
+# Not used in the current pipeline
 def validate_csv(df: pd.DataFrame) -> bool:
 	db_manager = global_instance.get_data("db_manager")
 	

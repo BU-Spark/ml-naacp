@@ -75,15 +75,6 @@ def startup_event():
             connection_obj=db_manager.act_con[0]
             )
         
-        # Save neighborhood data to global state
-
-        neighborhoods = db_manager.run_job(
-            get_neighborhoods,
-            db_manager.act_con[0]['connection'], # Argument 1 (1st connection)
-            connection_obj=db_manager.act_con[0]
-        )
-
-        global_instance.update_data("neighborhoods", neighborhoods)
     except Exception as e:
         print(f"[Error!] FATAL ERROR! | {e}")
         raise
@@ -125,7 +116,7 @@ def process_data():
             print(df)
 
             # We run the ML Pipeline here
-            run_pipeline(df, message_data["upload_id"], message_data["userID"], message_data["uploadTimeStamp"])
+            run_pipeline(df, message_data["upload_id"], message_data["userID"], message_data["orgID"], message_data["uploadTimeStamp"])
 
             # Signal that the processing is complete
             message_queue.task_done()

@@ -2,7 +2,7 @@ import secret
 from pymongo import MongoClient
 
 
-def update_job_status(client, upload_id, user_id, timestamp, article_cnt, status, message):
+def update_job_status(client, upload_id, user_id, org_id, filename, timestamp, article_cnt, status, message):
     try:
         db = client[secret.db_name]
         
@@ -16,7 +16,11 @@ def update_job_status(client, upload_id, user_id, timestamp, article_cnt, status
 
         upload_collection.update_one(
             {'uploadID': upload_id},
-            {'$set': updated_fields, '$setOnInsert': {'userID': user_id, 'timestamp': str(timestamp)}},
+            {'$set': updated_fields, '$setOnInsert': {
+                'userID': user_id, 
+                'orgID': org_id,
+                'filename': filename,
+                'timestamp': str(timestamp)}},
             upsert=True
         )
 

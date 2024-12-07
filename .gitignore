@@ -218,4 +218,4 @@ embed_topic_model/dxyu_pure_embedding_topic_modeling.ipynb
 
 .env
 env
-.yaml
+*.yaml

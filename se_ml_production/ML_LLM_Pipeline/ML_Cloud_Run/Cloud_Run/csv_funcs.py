@@ -7,20 +7,17 @@ from fastapi import UploadFile
 from global_state import global_instance
 
 def is_duplicate_article(tag, articles_collection):
-	queryArticles = {
-		'$and': [
-			{'userID': global_instance.get_data("userID")},
-			{'content_id': tag}
-		]
-	}
-	return articles_collection.find_one(queryArticles) is not None
+	query = {'_id': tag}
+	return articles_collection.find_one(query) is not None
 
 def run_validation(client, df):
 	db_prod = client[secret.db_name]
 	collection_list = db_prod.list_collection_names()
+	org_Id = global_instance.get_data("orgID")
+	collection_name = f"articles_data_{org_Id}"
 
-	if ('articles_data' in collection_list):
-		articles_collection = db_prod['articles_data']
+	if (collection_name in collection_list):
+		articles_collection = db_prod[collection_name]
 		df['is_duplicate'] = df['content_id'].apply(lambda tag: is_duplicate_article(tag, articles_collection))
 		print(df[df['is_duplicate'] == False]['content_id'])
 		df = df.drop(df[df['is_duplicate']].index).drop(columns='is_duplicate')

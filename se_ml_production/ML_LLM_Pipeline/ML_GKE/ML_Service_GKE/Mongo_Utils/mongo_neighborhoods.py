@@ -2,26 +2,50 @@ import secret
 
 from Mongo_Utils.mongo_funcs import get_collection
 
+from global_state import global_instance
+
 # Get all neighborhoods from the database for geocoding
-def get_neighborhoods(client):
+def get_neighborhoods(client, org_key):
+	db_prod = client[secret.db_name]
+	try:
+		neighborhood_collection = get_collection(db_prod, "neighborhood_data_" + org_key)
+		tract_to_neighborhood = {}
+		neighborhood_to_tracts = {}
+		
+		neighborhoods = neighborhood_collection.find()
 
-    db_prod = client[secret.db_name]
+		# Populate the dictionary with tract-to-neighborhood mappings
+		for neighborhood in neighborhoods:
+			neighborhood_name = neighborhood.get('value')
+			tracts = neighborhood.get('tracts', [])
+			
+			for tract in tracts:
+				tract_to_neighborhood[tract] = neighborhood_name
 
-    neighborhood_collection = get_collection(db_prod, "neighborhood_data")
+			if neighborhood_name not in neighborhood_to_tracts:
+				neighborhood_to_tracts[neighborhood_name] = tracts
 
-    tract_to_neighborhood = {}
-    
-    neighborhoods = neighborhood_collection.find()
-    
-    # Populate the dictionary with tract-to-neighborhood mappings
-    for neighborhood in neighborhoods:
-        neighborhood_name = neighborhood.get('value')
-        tracts = neighborhood.get('tracts', [])
-        
-        for tract in tracts:
-            tract_to_neighborhood[tract] = neighborhood_name
+		return tract_to_neighborhood, neighborhood_to_tracts
+	except Exception as error:
+		print(f"[ERROR] Error getting neighborhoods from database: {error}")
+		neigh_map = neigh_tract_dict
+		tract_map = {}
+		for neigh, tracts in neigh_tract_dict.items():
+			for tract in tracts:
+				tract_map[tract] = neigh
+		return tract_map, neigh_map
 
-    return tract_to_neighborhood
+def create_neighborhood(tract, neighborhood):
+	neigh_map = global_instance.get_data("neigh_map")
+	tract_map = global_instance.get_data("tract_map")
+	
+	if neighborhood not in neigh_map:
+		neigh_map[neighborhood] = [tract]
+	else:
+		neigh_map[neighborhood].append(tract)
+	tract_map[tract] = neighborhood
+	global_instance.update_data("neigh_map", neigh_map)
+	global_instance.update_data("tract_map", tract_map)
 
 # Just in case, should not be used in production
 neigh_tract_dict = {

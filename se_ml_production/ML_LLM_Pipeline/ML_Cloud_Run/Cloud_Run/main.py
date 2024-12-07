@@ -6,13 +6,16 @@ from bootstrappers import bootstrap_pipeline, validate_bootstrap, bootstrap_Mong
 import logging
 from starlette.responses import JSONResponse
 
-
-# Rate Limiting
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
+from fastapi import Request
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
+
+# Rate Limiting
 limiter = Limiter(key_func=get_remote_address, default_limits=["3/minute"])
 
 app.state.limiter = limiter
@@ -23,48 +26,44 @@ app.add_middleware(SlowAPIMiddleware)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# # Enforce HTTPS 
-# from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
+# TODO: Domain Whitelisting - add domain to secret.py
+# ALLOWED_DOMAINS = secret.ALLOWED_DOMAINS
 
-# app.add_middleware(HTTPSRedirectMiddleware)
+# class DomainAuthenticationMiddleware(BaseHTTPMiddleware):
+#     async def dispatch(self, request: Request, call_next):
+#         origin = request.headers.get("Host")
 
-# CORS - Cross Origin Resource Sharing
+#         if origin not in ALLOWED_DOMAINS:
+#             logger.warning(f"Unauthorized domain attempted to connect: {origin}")
+#             return JSONResponse(
+#                 status_code=403,
+#                 content={"detail": "Access forbidden: Unauthorized domain"}
+#             )
+        
+#         response = await call_next(request)
+#         return response
 
-# from fastapi.middleware.cors import CORSMiddleware
+# app.add_middleware(DomainAuthenticationMiddleware)
 
-# origins = ["webpage"]
+# # TODO: IP Whitelisting - Alternatively, add IP if it's static
+# WHITELISTED_IPS = []
+# class IPWhitelistMiddleware(BaseHTTPMiddleware):
+#     async def dispatch(self, request: Request, call_next):
+#         client_ip = request.client.host
 
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=origins,
-#     allow_credentials=True,
-#     allow_methods=["GET", "POST"],  # Limit allowed methods
-#     allow_headers=["*"],  # Specify allowed headers
-# )
+#         if client_ip not in WHITELISTED_IPS:
+#             logger.warning(f" Unauthorized IP attempted to connect: {client_ip}")
 
-# # IP Whitelisting
+#             # Respond with a custom message
+#             return JSONResponse(
+#                 status_code=403,
+#                 content={"detail": "Access forbidden: Your IP is not allowed to access this service."}
+#             )
 
-from fastapi import HTTPException, Request, Security
-from starlette.middleware.base import BaseHTTPMiddleware
+#         response = await call_next(request)
+#         return response
 
-WHITELISTED_IPS = ["127.0.0.1", "10.142.15.231", "128.197.28.37", "128.197.28.135"]
-class IPWhitelistMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        client_ip = request.client.host
-
-        if client_ip not in WHITELISTED_IPS:
-            logger.warning(f" Unauthorized IP attempted to connect: {client_ip}")
-
-            # Respond with a custom message
-            return JSONResponse(
-                status_code=403,
-                content={"detail": "Access forbidden: Your IP is not allowed to access this service."}
-            )
-
-        response = await call_next(request)
-        return response
-
-app.add_middleware(IPWhitelistMiddleware)
+# app.add_middleware(IPWhitelistMiddleware)
 
 app.include_router(ml_router)
 
@@ -102,10 +101,24 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000) # This bootstraps the FastAPI 
 
 
+# # Enforce HTTPS 
+# from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
 
+# app.add_middleware(HTTPSRedirectMiddleware)
 
+# CORS - Cross Origin Resource Sharing
 
+# from fastapi.middleware.cors import CORSMiddleware
 
+# origins = ["webpage"]
+
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=origins,
+#     allow_credentials=True,
+#     allow_methods=["GET", "POST"],  # Limit allowed methods
+#     allow_headers=["*"],  # Specify allowed headers
+# )
 
 
 

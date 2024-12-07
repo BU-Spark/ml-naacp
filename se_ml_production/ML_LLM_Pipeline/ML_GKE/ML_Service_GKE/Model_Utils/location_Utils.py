@@ -163,50 +163,43 @@ def invalid_location(location):
     return False
 
 # Try finding locations from title
-def get_valid_title_locations(header):
-    known_title_locs = load_cache("./data_prod/known_locs.json")
-    known_locations = known_title_locs.keys()
-
+# If a location is in the title, use that as the article's location
+def get_title_entities(header):
+    known_title_locs_path = "./data_prod/known_locations.json"
+    known_title_locs = load_cache(known_title_locs_path)
+    known_title_locations = known_title_locs.keys()
+    # Look through the header for known locations
     locations_list = []
-    for location in known_locations:
+    for location in known_title_locations:
         loc = normalize_location(location)
         if (loc in header and can_add_location(loc)):
             locations_list.append(loc)
         
-        if (len(locations_list) == 5):
-            break
     
     if (len(locations_list) == 0):
         return None
     else:
-        return locations_list
+        all_locations = {"FAC": locations_list, "ORG": []}
+
+        return all_locations
 
 # Get the top 5 most common locations
 def get_main_5(facilities, organizations):
-
     fac_freq = Counter(facilities)
     org_freq = Counter(organizations)
-
-    top_fac = fac_freq.most_common(1) if facilities else []
-    top_org = org_freq.most_common(1) if organizations else []
-
-    combined = facilities + organizations
-    combined_freq = Counter(combined)
-
-    if top_fac:
-        combined_freq.pop(top_fac[0][0], None)
-    if top_org:
-        combined_freq.pop(top_org[0][0], None)
     
-    top_combined = combined_freq.most_common(3)
+    top_entities = [] + fac_freq.most_common(1) + org_freq.most_common(1)
 
-    top_entities = top_fac + top_org + top_combined
+    top_entities.extend([entity for entity in fac_freq.most_common() if entity not in top_entities])
+
+    top_entities.extend([entity for entity in org_freq.most_common(5 - len(top_entities)) if entity not in top_entities])
+
+    if len(top_entities) == 0: return None
     
     top_entities = [entity[0] for entity in top_entities]
-
     return top_entities
 
-
+# Add a location to the list of valid locations
 def add_entity(entity, valid_list):
     loc = normalize_location(entity)
     if (can_add_location(loc)):
@@ -228,9 +221,43 @@ def get_valid_entities(entities):
         elif (entity.label_ == "ORG"):
             valid_orgs = add_entity(entity.text, valid_orgs)
 
-    valid_entities = get_main_5(valid_facs, valid_orgs)
-    
-    if (len(valid_entities) == 0):
+    if (len(valid_facs) == 0 and len(valid_orgs) == 0):
         return None
     else:
-        return valid_entities
+        all_locations = {"FAC": valid_facs, "ORG": valid_orgs}
+
+        return all_locations
+    
+# Get the best location name from a list of locations
+def best_location(locations):
+	if len(locations) == 1: return locations[0]
+	
+	# Remove some/(most?) abbreviations
+	locations = [location for location in locations if len(location) > 3]
+	if len(locations) == 1: return locations[0]
+
+	sorted_locations = sorted(locations, key=len)
+
+	def find_substring(sorted_list):
+		for i in range(len(sorted_list)):
+			substring = sorted_list[i]
+			
+			# Skip single words
+			if len(substring.split(" ")) == 1: continue
+			
+			# Check if this substring is in at least some of the others
+			# Since it's ordered, getting the first one that has a match might give us the 'best' location name
+			count = sum(1 for other in sorted_list if substring in other and other != substring)
+			if count > 0: return substring
+			
+		return None
+
+	# Get the result
+	result = find_substring(sorted_locations)
+	if result: return result
+	
+	if len(sorted_locations[0].split(" ")) > 1:
+		return sorted_locations[0]
+	else:
+		return sorted_locations[1]
+    
